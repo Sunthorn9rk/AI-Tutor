@@ -1,0 +1,32 @@
+# deps / build
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.tsbuildinfo
+
+# local env — the Gemini key is entered in-app and lives in localStorage,
+# so nothing secret should ever land here, but keep the door shut anyway.
+.env
+.env.*
+!.env.example
+
+# screen recordings and other large captures (GitHub rejects >100MB)
+*.MOV
+*.mov
+*.mp4
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Bundled 3D avatars are excluded on licensing grounds — see CREDITS.md.
+# Only tutor.vrm (the official VRM Consortium mascot) is committed.
+# The files stay on disk locally; they are simply not redistributed here.
+2713390176371410506.glb
+app/public/avatars/lia.vrm
+app/public/avatars/shino.vrm

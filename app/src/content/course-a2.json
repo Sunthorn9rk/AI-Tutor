@@ -1,0 +1,277 @@
+{
+  "id": "course-a2",
+  "level": "A2",
+  "title": "English A2 — Everyday Speaking",
+  "modules": [
+    {
+      "id": "m1",
+      "title": "Meeting friends",
+      "titleTh": "นัดเจอเพื่อน",
+      "tutorId": "mia",
+      "sceneId": "catching-up",
+      "lessons": [
+        {
+          "id": "m1l1",
+          "title": "Catching up",
+          "titleTh": "ชวนเพื่อนมาเจอกัน",
+          "steps": [
+            { "type": "tutor_say", "en": "Hi! Today we will learn how to invite a friend to meet up.", "th": "สวัสดี! วันนี้เราจะเรียนวิธีชวนเพื่อนมาเจอกัน" },
+            { "type": "tutor_say", "en": "to meet up", "th": "นัดเจอกัน" },
+            { "type": "speak", "en": "to meet up", "th": "นัดเจอกัน" },
+            { "type": "tutor_say", "en": "Do you want to meet up?", "th": "คุณอยากนัดเจอกันไหม?" },
+            { "type": "speak", "en": "Do you want to meet up?", "th": "คุณอยากนัดเจอกันไหม?" },
+            { "type": "repeat_by_ear", "en": "to meet up", "th": "นัดเจอกัน" },
+            { "type": "tutor_say", "en": "tomorrow", "th": "พรุ่งนี้" },
+            { "type": "speak", "en": "tomorrow", "th": "พรุ่งนี้" },
+            { "type": "tutor_say", "en": "Are you free tomorrow?", "th": "พรุ่งนี้คุณว่างไหม?" },
+            { "type": "speak", "en": "Are you free tomorrow?", "th": "พรุ่งนี้คุณว่างไหม?" },
+            { "type": "repeat_by_ear", "en": "Are you free tomorrow?", "th": "พรุ่งนี้คุณว่างไหม?" },
+            { "type": "translate", "en": "Do you want to meet up?", "th": "คุณอยากนัดเจอกันไหม?" },
+            { "type": "translate", "en": "Are you free tomorrow?", "th": "พรุ่งนี้คุณว่างไหม?" },
+            { "type": "tutor_say", "en": "Great job! Now you can invite your friends.", "th": "เยี่ยมมาก! ตอนนี้คุณชวนเพื่อนได้แล้ว" }
+          ]
+        },
+        {
+          "id": "m1l2",
+          "title": "Making plans",
+          "titleTh": "นัดเวลาและสถานที่",
+          "steps": [
+            { "type": "tutor_say", "en": "Let's learn how to choose a time and place to meet.", "th": "มาเรียนวิธีนัดเวลาและสถานที่กัน" },
+            { "type": "tutor_say", "en": "What time works for you?", "th": "เวลาไหนสะดวกสำหรับคุณ?" },
+            { "type": "speak", "en": "What time works for you?", "th": "เวลาไหนสะดวกสำหรับคุณ?" },
+            { "type": "tutor_say", "en": "Let's meet at six.", "th": "เจอกันตอนหกโมงนะ" },
+            { "type": "speak", "en": "Let's meet at six.", "th": "เจอกันตอนหกโมงนะ" },
+            { "type": "repeat_by_ear", "en": "What time works for you?", "th": "เวลาไหนสะดวกสำหรับคุณ?" },
+            { "type": "tutor_say", "en": "at the entrance", "th": "ที่ทางเข้า" },
+            { "type": "speak", "en": "at the entrance", "th": "ที่ทางเข้า" },
+            { "type": "tutor_say", "en": "Do you want to meet at the entrance of the park?", "th": "อยากเจอกันที่ทางเข้าสวนไหม?" },
+            { "type": "speak", "en": "Do you want to meet at the entrance of the park?", "th": "อยากเจอกันที่ทางเข้าสวนไหม?" },
+            { "type": "translate", "en": "Let's meet at six.", "th": "เจอกันตอนหกโมงนะ" },
+            { "type": "translate", "en": "What time works for you?", "th": "เวลาไหนสะดวกสำหรับคุณ?" },
+            { "type": "tutor_say", "en": "Perfect! Making plans is easy now.", "th": "เพอร์เฟกต์! นัดหมายง่ายนิดเดียว" }
+          ]
+        },
+        {
+          "id": "m1l3",
+          "title": "Inviting a friend",
+          "titleTh": "เชิญชวนและตอบรับ",
+          "steps": [
+            { "type": "tutor_say", "en": "Now let's practice inviting people and answering invitations.", "th": "มาฝึกเชิญชวนและตอบรับคำชวนกัน" },
+            { "type": "tutor_say", "en": "Would you like to join us?", "th": "อยากมาร่วมกับพวกเราไหม?" },
+            { "type": "speak", "en": "Would you like to join us?", "th": "อยากมาร่วมกับพวกเราไหม?" },
+            { "type": "tutor_say", "en": "I'd love to.", "th": "อยากไปมากเลย" },
+            { "type": "speak", "en": "I'd love to.", "th": "อยากไปมากเลย" },
+            { "type": "repeat_by_ear", "en": "Would you like to join us?", "th": "อยากมาร่วมกับพวกเราไหม?" },
+            { "type": "tutor_say", "en": "Sounds good!", "th": "ฟังดูดีเลย!" },
+            { "type": "speak", "en": "Sounds good!", "th": "ฟังดูดีเลย!" },
+            { "type": "tutor_say", "en": "Maybe next time.", "th": "ไว้คราวหน้าแล้วกัน" },
+            { "type": "speak", "en": "Maybe next time.", "th": "ไว้คราวหน้าแล้วกัน" },
+            { "type": "translate", "en": "I'd love to.", "th": "อยากไปมากเลย" },
+            { "type": "translate", "en": "Sounds good!", "th": "ฟังดูดีเลย!" },
+            { "type": "tutor_say", "en": "Wonderful! You are ready for a real conversation.", "th": "ยอดเยี่ยม! คุณพร้อมคุยจริงแล้ว" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m2",
+      "title": "Social life — going to the cinema",
+      "titleTh": "ไปดูหนังกับเพื่อน",
+      "tutorId": "emma",
+      "sceneId": "cinema-plan",
+      "lessons": [
+        {
+          "id": "m2l1",
+          "title": "Watching a film",
+          "titleTh": "ชวนไปดูหนัง",
+          "steps": [
+            { "type": "tutor_say", "en": "Today we will talk about going to the cinema.", "th": "วันนี้เราจะคุยเรื่องการไปดูหนัง" },
+            { "type": "tutor_say", "en": "to watch a film", "th": "ดูหนัง" },
+            { "type": "speak", "en": "to watch a film", "th": "ดูหนัง" },
+            { "type": "tutor_say", "en": "Do you want to watch a film tonight?", "th": "คืนนี้อยากไปดูหนังไหม?" },
+            { "type": "speak", "en": "Do you want to watch a film tonight?", "th": "คืนนี้อยากไปดูหนังไหม?" },
+            { "type": "repeat_by_ear", "en": "to watch a film", "th": "ดูหนัง" },
+            { "type": "tutor_say", "en": "What kind of films do you like?", "th": "คุณชอบหนังแนวไหน?" },
+            { "type": "speak", "en": "What kind of films do you like?", "th": "คุณชอบหนังแนวไหน?" },
+            { "type": "tutor_say", "en": "I like comedies.", "th": "ฉันชอบหนังตลก" },
+            { "type": "speak", "en": "I like comedies.", "th": "ฉันชอบหนังตลก" },
+            { "type": "translate", "en": "Do you want to watch a film tonight?", "th": "คืนนี้อยากไปดูหนังไหม?" },
+            { "type": "translate", "en": "I like comedies.", "th": "ฉันชอบหนังตลก" },
+            { "type": "tutor_say", "en": "Nice! Let's continue.", "th": "เยี่ยม! ไปต่อกันเลย" }
+          ]
+        },
+        {
+          "id": "m2l2",
+          "title": "Booking tickets",
+          "titleTh": "ซื้อตั๋วหนัง",
+          "steps": [
+            { "type": "tutor_say", "en": "Let's learn how to buy tickets at the cinema.", "th": "มาเรียนวิธีซื้อตั๋วที่โรงหนังกัน" },
+            { "type": "tutor_say", "en": "two tickets, please", "th": "ขอตั๋วสองใบค่ะ/ครับ" },
+            { "type": "speak", "en": "two tickets, please", "th": "ขอตั๋วสองใบค่ะ/ครับ" },
+            { "type": "tutor_say", "en": "Can I have two tickets for the seven o'clock show?", "th": "ขอตั๋วรอบหนึ่งทุ่มสองใบได้ไหม?" },
+            { "type": "speak", "en": "Can I have two tickets for the seven o'clock show?", "th": "ขอตั๋วรอบหนึ่งทุ่มสองใบได้ไหม?" },
+            { "type": "repeat_by_ear", "en": "two tickets, please", "th": "ขอตั๋วสองใบค่ะ/ครับ" },
+            { "type": "tutor_say", "en": "Which seats would you like?", "th": "อยากได้ที่นั่งตรงไหน?" },
+            { "type": "speak", "en": "Which seats would you like?", "th": "อยากได้ที่นั่งตรงไหน?" },
+            { "type": "tutor_say", "en": "In the middle, please.", "th": "ตรงกลางค่ะ/ครับ" },
+            { "type": "speak", "en": "In the middle, please.", "th": "ตรงกลางค่ะ/ครับ" },
+            { "type": "translate", "en": "two tickets, please", "th": "ขอตั๋วสองใบค่ะ/ครับ" },
+            { "type": "translate", "en": "In the middle, please.", "th": "ตรงกลางค่ะ/ครับ" },
+            { "type": "tutor_say", "en": "Great! Enjoy the movie.", "th": "เยี่ยม! ขอให้สนุกกับหนังนะ" }
+          ]
+        },
+        {
+          "id": "m2l3",
+          "title": "After the movie",
+          "titleTh": "คุยหลังดูหนังจบ",
+          "steps": [
+            { "type": "tutor_say", "en": "Let's talk about the movie after watching it.", "th": "มาคุยกันหลังดูหนังจบ" },
+            { "type": "tutor_say", "en": "How was the movie?", "th": "หนังเป็นยังไงบ้าง?" },
+            { "type": "speak", "en": "How was the movie?", "th": "หนังเป็นยังไงบ้าง?" },
+            { "type": "tutor_say", "en": "It was amazing!", "th": "สนุกสุด ๆ ไปเลย!" },
+            { "type": "speak", "en": "It was amazing!", "th": "สนุกสุด ๆ ไปเลย!" },
+            { "type": "repeat_by_ear", "en": "How was the movie?", "th": "หนังเป็นยังไงบ้าง?" },
+            { "type": "tutor_say", "en": "My favorite part was the ending.", "th": "ช่วงที่ชอบที่สุดคือตอนจบ" },
+            { "type": "speak", "en": "My favorite part was the ending.", "th": "ช่วงที่ชอบที่สุดคือตอนจบ" },
+            { "type": "tutor_say", "en": "It was a bit boring.", "th": "มันน่าเบื่อไปหน่อย" },
+            { "type": "speak", "en": "It was a bit boring.", "th": "มันน่าเบื่อไปหน่อย" },
+            { "type": "translate", "en": "It was amazing!", "th": "สนุกสุด ๆ ไปเลย!" },
+            { "type": "translate", "en": "How was the movie?", "th": "หนังเป็นยังไงบ้าง?" },
+            { "type": "tutor_say", "en": "Excellent work today!", "th": "วันนี้ทำได้ยอดเยี่ยมมาก!" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "m3",
+      "title": "Past Simple — practice",
+      "titleTh": "เล่าเรื่องในอดีต (Past Simple)",
+      "tutorId": "bryan",
+      "sceneId": "weekend-chat",
+      "lessons": [
+        {
+          "id": "m3l1",
+          "title": "Weekend",
+          "titleTh": "สุดสัปดาห์ของฉัน",
+          "steps": [
+            { "type": "tutor_say", "en": "Today we will talk about the past. Let's start with the weekend.", "th": "วันนี้เราจะพูดถึงเรื่องในอดีต เริ่มจากสุดสัปดาห์กัน" },
+            { "type": "tutor_say", "en": "last weekend", "th": "สุดสัปดาห์ที่แล้ว" },
+            { "type": "speak", "en": "last weekend", "th": "สุดสัปดาห์ที่แล้ว" },
+            { "type": "tutor_say", "en": "I stayed home last weekend.", "th": "สุดสัปดาห์ที่แล้วฉันอยู่บ้าน" },
+            { "type": "speak", "en": "I stayed home last weekend.", "th": "สุดสัปดาห์ที่แล้วฉันอยู่บ้าน" },
+            { "type": "repeat_by_ear", "en": "last weekend", "th": "สุดสัปดาห์ที่แล้ว" },
+            { "type": "tutor_say", "en": "I went to the beach.", "th": "ฉันไปทะเลมา" },
+            { "type": "speak", "en": "I went to the beach.", "th": "ฉันไปทะเลมา" },
+            { "type": "tutor_say", "en": "I met my friends.", "th": "ฉันได้เจอเพื่อน ๆ" },
+            { "type": "speak", "en": "I met my friends.", "th": "ฉันได้เจอเพื่อน ๆ" },
+            { "type": "translate", "en": "I went to the beach.", "th": "ฉันไปทะเลมา" },
+            { "type": "translate", "en": "I stayed home last weekend.", "th": "สุดสัปดาห์ที่แล้วฉันอยู่บ้าน" },
+            { "type": "tutor_say", "en": "Well done! The past is not so hard.", "th": "เก่งมาก! เรื่องอดีตไม่ยากเลย" }
+          ]
+        },
+        {
+          "id": "m3l2",
+          "title": "What did you do?",
+          "titleTh": "ถามว่าทำอะไรมาบ้าง",
+          "steps": [
+            { "type": "tutor_say", "en": "Now let's ask questions about the past.", "th": "ทีนี้มาฝึกตั้งคำถามเกี่ยวกับอดีตกัน" },
+            { "type": "tutor_say", "en": "What did you do last weekend?", "th": "สุดสัปดาห์ที่แล้วคุณทำอะไร?" },
+            { "type": "speak", "en": "What did you do last weekend?", "th": "สุดสัปดาห์ที่แล้วคุณทำอะไร?" },
+            { "type": "tutor_say", "en": "Where did you go?", "th": "คุณไปที่ไหนมา?" },
+            { "type": "speak", "en": "Where did you go?", "th": "คุณไปที่ไหนมา?" },
+            { "type": "repeat_by_ear", "en": "What did you do last weekend?", "th": "สุดสัปดาห์ที่แล้วคุณทำอะไร?" },
+            { "type": "tutor_say", "en": "Who did you go with?", "th": "คุณไปกับใคร?" },
+            { "type": "speak", "en": "Who did you go with?", "th": "คุณไปกับใคร?" },
+            { "type": "tutor_say", "en": "I went with my family.", "th": "ฉันไปกับครอบครัว" },
+            { "type": "speak", "en": "I went with my family.", "th": "ฉันไปกับครอบครัว" },
+            { "type": "translate", "en": "Where did you go?", "th": "คุณไปที่ไหนมา?" },
+            { "type": "translate", "en": "What did you do last weekend?", "th": "สุดสัปดาห์ที่แล้วคุณทำอะไร?" },
+            { "type": "tutor_say", "en": "Great questions! Keep going.", "th": "ตั้งคำถามได้เยี่ยม! ไปต่อกัน" }
+          ]
+        },
+        {
+          "id": "m3l3",
+          "title": "How was your weekend?",
+          "titleTh": "เล่าความรู้สึกถึงวันหยุด",
+          "steps": [
+            { "type": "tutor_say", "en": "Finally, let's describe how things were.", "th": "สุดท้าย มาฝึกบอกความรู้สึกกัน" },
+            { "type": "tutor_say", "en": "How was your weekend?", "th": "สุดสัปดาห์ของคุณเป็นยังไงบ้าง?" },
+            { "type": "speak", "en": "How was your weekend?", "th": "สุดสัปดาห์ของคุณเป็นยังไงบ้าง?" },
+            { "type": "tutor_say", "en": "It was really fun.", "th": "สนุกมากเลย" },
+            { "type": "speak", "en": "It was really fun.", "th": "สนุกมากเลย" },
+            { "type": "repeat_by_ear", "en": "How was your weekend?", "th": "สุดสัปดาห์ของคุณเป็นยังไงบ้าง?" },
+            { "type": "tutor_say", "en": "It was quite relaxing.", "th": "ผ่อนคลายดีทีเดียว" },
+            { "type": "speak", "en": "It was quite relaxing.", "th": "ผ่อนคลายดีทีเดียว" },
+            { "type": "tutor_say", "en": "I was very tired.", "th": "ฉันเหนื่อยมาก" },
+            { "type": "speak", "en": "I was very tired.", "th": "ฉันเหนื่อยมาก" },
+            { "type": "translate", "en": "It was really fun.", "th": "สนุกมากเลย" },
+            { "type": "translate", "en": "How was your weekend?", "th": "สุดสัปดาห์ของคุณเป็นยังไงบ้าง?" },
+            { "type": "tutor_say", "en": "Amazing! You finished the whole module.", "th": "สุดยอด! คุณจบทั้ง module แล้ว" }
+          ]
+        }
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "id": "catching-up",
+      "title": "Catching up with a friend",
+      "titleTh": "โทรคุยกับเพื่อนเก่า",
+      "emoji": "📞",
+      "briefTh": "โทรหาเพื่อนสนิทของคุณเพื่อพูดคุยและนัดเจอกัน เลือกเวลาและสถานที่ให้เรียบร้อย",
+      "persona": "You are Alex, the learner's close friend. They just texted you that they want to meet up. You are happy to hear from them and want to make plans.",
+      "opening": "Hi there! I saw your text. Do you want to meet up?",
+      "tasks": [
+        { "id": "t1", "th": "ชวนมาเจอกันพรุ่งนี้", "en": "Invite the friend to meet up tomorrow" },
+        { "id": "t2", "th": "เสนอเวลานัดหมาย", "en": "Suggest a time for the meeting" },
+        { "id": "t3", "th": "เสนอสถานที่นัดหมาย", "en": "Suggest a place to meet" },
+        { "id": "t4", "th": "กล่าวลาก่อนวางสาย", "en": "Say goodbye to end the conversation" }
+      ]
+    },
+    {
+      "id": "cinema-plan",
+      "title": "Going to the cinema",
+      "titleTh": "ชวนเพื่อนไปดูหนัง",
+      "emoji": "🎬",
+      "briefTh": "ชวนเพื่อนไปดูหนังคืนนี้ ตกลงกันว่าจะดูเรื่องแนวไหน รอบกี่โมง และเจอกันที่ไหน",
+      "persona": "You are Sam, the learner's friend. They are calling to invite you to the cinema. You like action movies but are open to other genres.",
+      "opening": "Hey! Good to hear from you. What's up?",
+      "tasks": [
+        { "id": "t1", "th": "ชวนไปดูหนังคืนนี้", "en": "Invite the friend to watch a film tonight" },
+        { "id": "t2", "th": "ถามว่าชอบหนังแนวไหน", "en": "Ask what kind of films they like" },
+        { "id": "t3", "th": "ตกลงเวลารอบหนัง", "en": "Agree on a showtime" },
+        { "id": "t4", "th": "นัดจุดเจอกันที่โรงหนัง", "en": "Agree where to meet at the cinema" }
+      ]
+    },
+    {
+      "id": "weekend-chat",
+      "title": "Talking about your weekend",
+      "titleTh": "เล่าเรื่องสุดสัปดาห์",
+      "emoji": "☀️",
+      "briefTh": "เพื่อนร่วมงานถามถึงสุดสัปดาห์ของคุณ เล่าให้ฟังว่าทำอะไร ไปไหน กับใคร และถามกลับด้วย",
+      "persona": "You are Joy, the learner's friendly coworker. It's Monday morning and you are chatting about the weekend over coffee.",
+      "opening": "Good morning! How was your weekend?",
+      "tasks": [
+        { "id": "t1", "th": "เล่าว่าสุดสัปดาห์ทำอะไรมา (ใช้ past simple)", "en": "Describe what they did last weekend using past simple" },
+        { "id": "t2", "th": "บอกว่าไปที่ไหนหรือไปกับใคร", "en": "Say where they went or who they went with" },
+        { "id": "t3", "th": "บอกความรู้สึก (สนุก/เหนื่อย/ผ่อนคลาย)", "en": "Say how the weekend felt (fun, tiring, relaxing)" },
+        { "id": "t4", "th": "ถามกลับว่าสุดสัปดาห์ของอีกฝ่ายเป็นยังไง", "en": "Ask the coworker about their weekend" }
+      ]
+    },
+    {
+      "id": "job-interview",
+      "title": "Job interview — project manager",
+      "titleTh": "สัมภาษณ์งานตำแหน่ง Project Manager",
+      "emoji": "💼",
+      "briefTh": "คุณกำลังสัมภาษณ์งานตำแหน่ง Project Manager แนะนำตัว เล่าประสบการณ์ และถามคำถามผู้สัมภาษณ์",
+      "persona": "You are Bryan, a hiring manager interviewing the learner for a Project Manager role. Be professional but warm. Ask one interview question at a time.",
+      "opening": "Greetings! Thank you for attending this job interview for a Project Manager role in our company. I'm Bryan and I will be leading the interview. Could you tell me your name?",
+      "tasks": [
+        { "id": "t1", "th": "แนะนำชื่อตัวเอง", "en": "Introduce themselves by name" },
+        { "id": "t2", "th": "เล่าประสบการณ์ทำงานหรือจุดแข็ง", "en": "Describe their work experience or strengths" },
+        { "id": "t3", "th": "ตอบว่าทำไมถึงอยากได้งานนี้", "en": "Explain why they want this job" },
+        { "id": "t4", "th": "ถามคำถามผู้สัมภาษณ์อย่างน้อย 1 ข้อ", "en": "Ask the interviewer at least one question" }
+      ]
+    }
+  ]
+}
