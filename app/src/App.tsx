@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { getSettings } from './services/store'
 import { ensureLocalTTS } from './services/local-tts'
+import { applyDocumentLang } from './services/i18n'
 import Onboarding from './screens/Onboarding'
 import Home from './screens/Home'
 import LessonPlayer from './screens/LessonPlayer'
@@ -19,6 +20,7 @@ function RequireOnboarded({ children }: { children: React.ReactNode }) {
 export default function App() {
   // ใช้เสียง AI ในเครื่องอยู่ → โหลดโมเดลตั้งแต่เปิดแอป (มี cache แล้วโหลดเร็ว) จะได้พร้อมก่อนเข้าบทเรียน
   useEffect(() => {
+    applyDocumentLang()
     if (getSettings().ttsEngine === 'local') void ensureLocalTTS()
   }, [])
 

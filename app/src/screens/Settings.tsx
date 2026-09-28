@@ -7,7 +7,7 @@ import { LOCAL_VOICES, ensureLocalTTS, getLocalTTSStatus, onLocalTTSStatus } fro
 import { clearTTSCache } from '../services/tts-cache'
 import { listOllamaModels } from '../services/ollama'
 import { isSTTSupported } from '../services/stt'
-import { saveCustomAvatar, clearCustomAvatar, hasCustomAvatar, BUNDLED_AVATARS } from '../services/avatar-file'
+import { tx, applyDocumentLang } from '../services/i18n'
 import TutorAvatar from '../components/TutorAvatar'
 import BottomNav from '../components/BottomNav'
 
@@ -20,25 +20,6 @@ export default function Settings() {
   const [localTTS, setLocalTTS] = useState(getLocalTTSStatus())
   const [ollamaModels, setOllamaModels] = useState<string[] | null>(null)
   const [ollamaError, setOllamaError] = useState('')
-  const [customAvatar, setCustomAvatar] = useState(false)
-  const [avatarMsg, setAvatarMsg] = useState('')
-
-  useEffect(() => {
-    void hasCustomAvatar().then(setCustomAvatar)
-  }, [])
-
-  const onAvatarFile = async (file: File | undefined) => {
-    if (!file) return
-    if (!file.name.toLowerCase().endsWith('.vrm')) {
-      setAvatarMsg('⚠️ ต้องเป็นไฟล์ .vrm เท่านั้น')
-      return
-    }
-    await saveCustomAvatar(await file.arrayBuffer())
-    setCustomAvatar(true)
-    update({ avatarFile: 'custom' })
-    setAvatarMsg('✓ เปลี่ยนตัวละครแล้ว — มีผลตอนเข้าบทเรียน')
-  }
-
   const loadOllamaModels = async (url: string) => {
     setOllamaError('')
     try {
@@ -50,7 +31,7 @@ export default function Settings() {
       }
     } catch {
       setOllamaModels(null)
-      setOllamaError('ต่อ Ollama ไม่ได้ — เช็คว่าแอป Ollama เปิดอยู่ (หรือรัน `ollama serve`)')
+      setOllamaError(tx('ต่อ Ollama ไม่ได้ — เช็คว่าแอป Ollama เปิดอยู่ (หรือรัน `ollama serve`)', "Can't reach Ollama — make sure the Ollama app is running (or run `ollama serve`)"))
     }
   }
 
@@ -74,11 +55,36 @@ export default function Settings() {
   return (
     <div className="mx-auto max-w-md px-5 pb-24 pt-[calc(env(safe-area-inset-top)+20px)]">
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-navy-900">ตั้งค่า ⚙️</h1>
-        {saved && <span className="text-sm font-bold text-leaf-600">บันทึกแล้ว ✓</span>}
+        <h1 className="text-2xl font-extrabold text-navy-900">{tx('ตั้งค่า', 'Settings')} ⚙️</h1>
+        {saved && <span className="text-sm font-bold text-leaf-600">{tx('บันทึกแล้ว', 'Saved')} ✓</span>}
       </div>
 
-      <Section title="ชื่อของคุณ">
+      <Section title={tx('ภาษาแอป', 'App language')}>
+        <div className="flex gap-2">
+          {(
+            [
+              ['th', 'ไทย'],
+              ['en', 'English'],
+            ] as ['th' | 'en', string][]
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => {
+                update({ uiLang: id })
+                applyDocumentLang()
+              }}
+              className={`flex-1 rounded-xl border-2 bg-white px-2 py-2.5 text-sm font-semibold ${
+                s.uiLang === id ? 'border-bee-400 text-navy-900' : 'border-transparent text-gray-500'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      <Section title={tx('ชื่อของคุณ', 'Your name')}>
         <input
           value={s.name}
           onChange={(e) => update({ name: e.target.value })}
@@ -87,130 +93,42 @@ export default function Settings() {
       </Section>
 
       <Section title="Tutor">
-        <div className="flex gap-3">
+        {/* 14 ตัว → ตาราง 4 คอลัมน์ ห้ามเป็น flex แถวเดียว (จะล้นจอแนวนอน) */}
+        <div className="grid grid-cols-4 gap-2">
           {tutors.map((t) => (
             <button
               key={t.id}
               type="button"
-              onClick={() => update({ tutorId: t.id })}
-              className={`flex flex-1 flex-col items-center gap-1 rounded-2xl border-2 bg-white p-2.5 ${
-                s.tutorId === t.id ? 'border-bee-400' : 'border-transparent'
+              onClick={() => {
+                update({ tutorId: t.id })
+                // ให้ได้ยินเสียงของตัวที่เลือกทันที (อ่านจาก settings ที่เพิ่งบันทึก)
+                speak(`Hi! I'm ${t.name.replace(/^Grand(ma|pa) /, '')}. Nice to meet you!`, { rate: 'natural' })
+              }}
+              className={`flex min-w-0 flex-col items-center gap-1 rounded-tile bg-surface p-2 transition active:scale-95 ${
+                s.tutorId === t.id ? 'ring-2 ring-tang-400' : 'ring-1 ring-navy-200/30'
               }`}
             >
               <TutorAvatar tutorId={t.id} size={52} />
-              <span className="text-xs font-bold text-navy-900">{t.name}</span>
+              <span className="w-full truncate text-center text-[11px] font-bold text-navy-900">{t.name.replace(/^Grand(ma|pa) /, '')}</span>
             </button>
           ))}
         </div>
+        <p className="mt-2 text-xs text-navy-400">
+          <b className="text-navy-700">{tutors.find((t) => t.id === s.tutorId)?.name}</b> ·{' '}
+          {(() => {
+            const t = tutors.find((t) => t.id === s.tutorId)
+            return t ? tx(t.desc, t.descEn) : ''
+          })()}
+        </p>
       </Section>
 
-      <Section title="ตัวละคร Tutor ในบทเรียน">
-        <div className="mb-2 flex gap-2">
-          <button
-            type="button"
-            onClick={() => update({ avatarStyle: 'vrm' })}
-            className={`flex-1 rounded-xl border-2 bg-white px-2 py-2.5 text-sm font-semibold ${
-              s.avatarStyle === 'vrm' ? 'border-bee-400 text-navy-900' : 'border-transparent text-gray-500'
-            }`}
-          >
-            🧍‍♀️ ตัวละคร 3D
-            <span className="block text-[11px] font-normal text-gray-400">ขยับปากตามเสียงจริง</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => update({ avatarStyle: 'cartoon' })}
-            className={`flex-1 rounded-xl border-2 bg-white px-2 py-2.5 text-sm font-semibold ${
-              s.avatarStyle === 'cartoon' ? 'border-bee-400 text-navy-900' : 'border-transparent text-gray-500'
-            }`}
-          >
-            🐝 การ์ตูน
-            <span className="block text-[11px] font-normal text-gray-400">เบา เรียบง่าย</span>
-          </button>
-        </div>
-
-        {s.avatarStyle === 'vrm' && (
-          <>
-            <div className="mb-2 grid grid-cols-2 gap-2">
-              {BUNDLED_AVATARS.map((a) => (
-                <button
-                  key={a.file}
-                  type="button"
-                  onClick={() => {
-                    update({ avatarFile: a.file })
-                    setAvatarMsg(`✓ ใช้ ${a.name} แล้ว`)
-                  }}
-                  className={`rounded-xl border-2 bg-white px-3 py-2 text-left text-xs ${
-                    s.avatarFile === a.file ? 'border-bee-400' : 'border-transparent'
-                  }`}
-                >
-                  <span className="font-en text-sm font-bold text-navy-900">{a.name}</span>
-                  <span className="block text-gray-500">{a.desc}</span>
-                </button>
-              ))}
-              {customAvatar && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    update({ avatarFile: 'custom' })
-                    setAvatarMsg('✓ ใช้ตัวละครของคุณแล้ว')
-                  }}
-                  className={`rounded-xl border-2 bg-white px-3 py-2 text-left text-xs ${
-                    s.avatarFile === 'custom' ? 'border-bee-400' : 'border-transparent'
-                  }`}
-                >
-                  <span className="font-en text-sm font-bold text-navy-900">My avatar</span>
-                  <span className="block text-gray-500">ไฟล์ที่คุณอัปโหลด</span>
-                </button>
-              )}
-            </div>
-            <label className="block w-full cursor-pointer rounded-xl border-2 border-dashed border-bee-300 bg-bee-100/60 px-3 py-2.5 text-center text-sm font-bold text-navy-900">
-              📂 เพิ่มไฟล์ตัวละคร .vrm ของคุณเอง
-              <input
-                type="file"
-                accept=".vrm"
-                className="hidden"
-                onChange={(e) => void onAvatarFile(e.target.files?.[0])}
-              />
-            </label>
-            {avatarMsg && <p className="mt-1.5 text-xs font-bold text-leaf-600">{avatarMsg}</p>}
-            {customAvatar && s.avatarFile === 'custom' && (
-              <button
-                type="button"
-                onClick={async () => {
-                  await clearCustomAvatar()
-                  setCustomAvatar(false)
-                  update({ avatarFile: BUNDLED_AVATARS[0].file })
-                  setAvatarMsg('ลบไฟล์และกลับไปใช้ตัวละครเริ่มต้นแล้ว')
-                }}
-                className="mt-2 w-full rounded-xl border-2 border-red-200 bg-white py-2 text-xs font-bold text-red-500"
-              >
-                🗑 ลบไฟล์ตัวละครที่อัปโหลด
-              </button>
-            )}
-            <p className="mt-2 text-xs leading-5 text-gray-500">
-              โหลดตัวละครเพิ่มได้ฟรีที่{' '}
-              <a
-                href="https://hub.vroid.com/en/models?is_downloadable=true"
-                target="_blank"
-                rel="noreferrer"
-                className="font-bold text-blue-600 underline"
-              >
-                hub.vroid.com
-              </a>{' '}
-              — <b>เลือกเฉพาะตัวที่มีไอคอนดาวน์โหลด ⬇️</b> (บางตัวผู้สร้างปิดดาวน์โหลด จะใช้ไม่ได้)
-              แล้วกดปุ่มเพิ่มไฟล์ด้านบน ไฟล์ถูกเก็บในเครื่อง ใช้ออฟไลน์ได้
-            </p>
-          </>
-        )}
-      </Section>
-
-      <Section title="ความเร็วเสียงพูด (แตะเพื่อฟังตัวอย่าง)">
+      <Section title={tx('ความเร็วเสียงพูด (แตะเพื่อฟังตัวอย่าง)', 'Speaking speed (tap to preview)')}>
         <div className="flex gap-2">
           {(
             [
-              ['words', '🐢 ทีละคำ'],
-              ['calm', '😌 ใจเย็น'],
-              ['natural', '💬 ธรรมชาติ'],
+              ['words', tx('🐢 ทีละคำ', '🐢 Word by word')],
+              ['calm', tx('😌 ใจเย็น', '😌 Calm')],
+              ['natural', tx('💬 ธรรมชาติ', '💬 Natural')],
             ] as [VoiceRate, string][]
           ).map(([id, label]) => (
             <button
@@ -230,7 +148,23 @@ export default function Settings() {
         </div>
       </Section>
 
-      <Section title="เสียงของ AI Tutor">
+      <Section title={tx('เสียงของ AI Tutor', 'AI Tutor voice')}>
+        <div className="mb-3">
+          <ToggleRow
+            on={s.voicePerCharacter}
+            onToggle={() => {
+              update({ voicePerCharacter: !s.voicePerCharacter })
+              resetVoiceCache()
+            }}
+            icon="🎭"
+            title={tx('เสียงตามตัวละคร', 'Voice per character')}
+            desc={
+              s.voicePerCharacter
+                ? tx('แต่ละตัวพูดด้วยเสียงของตัวเอง (ชาย/หญิง/วัย)', 'Each character speaks in their own voice (gender/age)')
+                : tx('ใช้เสียงที่เลือกเองด้านล่างกับทุกตัว', 'Use the voice you pick below for everyone')
+            }
+          />
+        </div>
         <div className="mb-3 grid grid-cols-3 gap-2">
           <button
             type="button"
@@ -239,8 +173,8 @@ export default function Settings() {
               s.ttsEngine === 'device' ? 'border-bee-400 text-navy-900' : 'border-transparent text-gray-500'
             }`}
           >
-            📱 เสียงระบบ
-            <span className="block text-[10px] font-normal text-gray-400">ฟรี ออฟไลน์</span>
+            📱 {tx('เสียงระบบ', 'System voice')}
+            <span className="block text-[10px] font-normal text-gray-400">{tx('ฟรี ออฟไลน์', 'Free, offline')}</span>
           </button>
           <button
             type="button"
@@ -252,8 +186,8 @@ export default function Settings() {
               s.ttsEngine === 'local' ? 'border-bee-400 text-navy-900' : 'border-transparent text-gray-500'
             }`}
           >
-            🧠 AI ในเครื่อง
-            <span className="block text-[10px] font-normal text-gray-400">ไม่จำกัด โหลดครั้งเดียว</span>
+            🧠 {tx('AI ในเครื่อง', 'On-device AI')}
+            <span className="block text-[10px] font-normal text-gray-400">{tx('ไม่จำกัด โหลดครั้งเดียว', 'Unlimited, one-time download')}</span>
           </button>
           <button
             type="button"
@@ -266,7 +200,7 @@ export default function Settings() {
             }`}
           >
             ✨ AI cloud
-            <span className="block text-[10px] font-normal text-gray-400">Gemini โควตาจำกัด</span>
+            <span className="block text-[10px] font-normal text-gray-400">{tx('Gemini โควตาจำกัด', 'Gemini, limited quota')}</span>
           </button>
         </div>
 
@@ -280,10 +214,10 @@ export default function Settings() {
                 className="mb-2 w-full rounded-xl border-2 border-bee-300 bg-bee-100 px-3 py-2.5 text-sm font-bold text-navy-900 disabled:opacity-70"
               >
                 {localTTS.status === 'downloading'
-                  ? `กำลังดาวน์โหลดโมเดลเสียง… ${localTTS.progress}%`
+                  ? `${tx('กำลังดาวน์โหลดโมเดลเสียง…', 'Downloading voice model…')} ${localTTS.progress}%`
                   : localTTS.status === 'error'
-                    ? 'โหลดไม่สำเร็จ — แตะเพื่อลองใหม่'
-                    : '⬇️ ดาวน์โหลดโมเดลเสียง (~90MB ครั้งเดียว)'}
+                    ? tx('โหลดไม่สำเร็จ — แตะเพื่อลองใหม่', 'Download failed — tap to retry')
+                    : tx('⬇️ ดาวน์โหลดโมเดลเสียง (~90MB ครั้งเดียว)', '⬇️ Download voice model (~90MB, one time)')}
               </button>
             )}
             {localTTS.status === 'downloading' && (
@@ -292,7 +226,7 @@ export default function Settings() {
               </div>
             )}
             {localTTS.status === 'ready' && (
-              <p className="mb-2 text-xs font-bold text-leaf-600">✓ โมเดลพร้อมใช้งาน — ไม่จำกัด ใช้ออฟไลน์ได้</p>
+              <p className="mb-2 text-xs font-bold text-leaf-600">✓ {tx('โมเดลพร้อมใช้งาน — ไม่จำกัด ใช้ออฟไลน์ได้', 'Model ready — unlimited, works offline')}</p>
             )}
             <div className="grid grid-cols-2 gap-2">
               {LOCAL_VOICES.map((v) => (
@@ -307,15 +241,18 @@ export default function Settings() {
                     s.localVoice === v.id ? 'border-bee-400' : 'border-transparent'
                   }`}
                 >
-                  <span className="font-en text-sm font-bold text-navy-900">{v.label.split(' — ')[0]}</span>
-                  <span className="block text-gray-500">{v.label.split(' — ')[1]}</span>
+                  <span className="font-en text-sm font-bold text-navy-900">{tx(v.label, v.labelEn).split(' — ')[0]}</span>
+                  <span className="block text-gray-500">{tx(v.label, v.labelEn).split(' — ')[1]}</span>
                 </button>
               ))}
             </div>
             <p className="mt-2 text-xs leading-5 text-gray-500">
-              เสียง AI ที่รันในเครื่องคุณเอง (Kokoro) — <b>ไม่มีโควตา ไม่ต้องใช้ key</b> ประโยคใหม่ใช้เวลา
-              generate ~1-5 วิ (แอปเตรียมล่วงหน้าให้ระหว่างเรียน) ประโยคที่เคยพูดแล้วดังทันที
-              ระหว่างเสียงยังไม่พร้อมจะใช้เสียงระบบไปก่อน
+              {tx('เสียง AI ที่รันในเครื่องคุณเอง (Kokoro) — ', 'An AI voice running on your own device (Kokoro) — ')}
+              <b>{tx('ไม่มีโควตา ไม่ต้องใช้ key', 'no quota, no key needed')}</b>{' '}
+              {tx(
+                'ประโยคใหม่ใช้เวลา generate ~1-5 วิ (แอปเตรียมล่วงหน้าให้ระหว่างเรียน) ประโยคที่เคยพูดแล้วดังทันที ระหว่างเสียงยังไม่พร้อมจะใช้เสียงระบบไปก่อน',
+                'New sentences take ~1-5 s to generate (the app prepares them ahead during lessons); sentences spoken before play instantly. Until the voice is ready, the system voice is used.',
+              )}
             </p>
           </>
         )}
@@ -331,7 +268,7 @@ export default function Settings() {
               }}
               className="w-full rounded-xl border-2 border-bee-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-bee-400"
             >
-              <option value="">อัตโนมัติ (แอปเลือกเสียงที่ดีที่สุดให้)</option>
+              <option value="">{tx('อัตโนมัติ (แอปเลือกเสียงที่ดีที่สุดให้)', 'Automatic (the app picks the best voice)')}</option>
               {voices.map((v) => (
                 <option key={`${v.name}|${v.lang}`} value={v.name}>
                   {v.name} ({v.lang})
@@ -339,9 +276,16 @@ export default function Settings() {
               ))}
             </select>
             <p className="mt-2 text-xs leading-5 text-gray-500">
-              💡 <b>เคล็ดลับ iPhone/Mac:</b> ดาวน์โหลดเสียงคุณภาพสูงได้ฟรีที่ ตั้งค่า → การช่วยการเข้าถึง →
-              เนื้อหาที่พูด → เสียง → English แล้วเลือกเสียงที่มีคำว่า <b>(Enhanced)</b> หรือ <b>(Premium)</b>{' '}
-              จากรายการด้านบน — เสียงจะธรรมชาติขึ้นมาก (เลือกแล้วจะมีเสียงตัวอย่างให้ฟัง)
+              💡 <b>{tx('เคล็ดลับ iPhone/Mac:', 'iPhone/Mac tip:')}</b>{' '}
+              {tx(
+                'ดาวน์โหลดเสียงคุณภาพสูงได้ฟรีที่ ตั้งค่า → การช่วยการเข้าถึง → เนื้อหาที่พูด → เสียง → English แล้วเลือกเสียงที่มีคำว่า',
+                'download high-quality voices for free in Settings → Accessibility → Spoken Content → Voices → English, then pick a voice marked',
+              )}{' '}
+              <b>(Enhanced)</b> {tx('หรือ', 'or')} <b>(Premium)</b>{' '}
+              {tx(
+                'จากรายการด้านบน — เสียงจะธรรมชาติขึ้นมาก (เลือกแล้วจะมีเสียงตัวอย่างให้ฟัง)',
+                'from the list above — it sounds much more natural (you’ll hear a sample when you pick one)',
+              )}
             </p>
           </>
         )}
@@ -362,43 +306,48 @@ export default function Settings() {
                   }`}
                 >
                   <span className="font-en text-sm font-bold text-navy-900">{v.id}</span>
-                  <span className="block text-gray-500">{v.label.split('— ')[1]}</span>
+                  <span className="block text-gray-500">{tx(v.label, v.labelEn).split('— ')[1]}</span>
                 </button>
               ))}
             </div>
             {!s.geminiKey && (
-              <p className="mt-2 text-xs text-orange-600">⚠️ ต้องใส่ Gemini API key (ด้านล่าง) ก่อนถึงจะมีเสียง</p>
+              <p className="mt-2 text-xs text-orange-600">⚠️ {tx('ต้องใส่ Gemini API key (ด้านล่าง) ก่อนถึงจะมีเสียง', 'Add a Gemini API key (below) to enable this voice')}</p>
             )}
             <p className="mt-2 text-xs leading-5 text-gray-500">
-              โควตาฟรีของเสียง AI จำกัด (~3 ประโยคใหม่/นาที, ~15 ประโยคใหม่/วัน) แอปจึง
-              <b>เก็บเสียงที่โหลดแล้วไว้ในเครื่อง</b> — ประโยคเดิมเล่นทันทีไม่กินโควตา
-              และทยอยโหลดเสียงบทเรียนล่วงหน้าให้เอง ประโยคไหนยังโหลดไม่ทันจะใช้เสียงในเครื่องไปก่อน
-              (เรียนซ้ำบทเดิมวันถัดไปเสียงจะเป็น AI ครบทั้งบท)
+              {tx(
+                'โควตาฟรีของเสียง AI จำกัด (~3 ประโยคใหม่/นาที, ~15 ประโยคใหม่/วัน) แอปจึง',
+                'The free AI voice quota is limited (~3 new sentences/min, ~15 new sentences/day), so the app',
+              )}{' '}
+              <b>{tx('เก็บเสียงที่โหลดแล้วไว้ในเครื่อง', 'keeps downloaded audio on your device')}</b>{' '}
+              {tx(
+                '— ประโยคเดิมเล่นทันทีไม่กินโควตา และทยอยโหลดเสียงบทเรียนล่วงหน้าให้เอง ประโยคไหนยังโหลดไม่ทันจะใช้เสียงในเครื่องไปก่อน (เรียนซ้ำบทเดิมวันถัดไปเสียงจะเป็น AI ครบทั้งบท)',
+                '— repeated sentences play instantly without using quota, and lesson audio is fetched ahead of time. Sentences not ready yet use the device voice (replay the lesson the next day for full AI voice).',
+              )}
             </p>
           </>
         )}
       </Section>
 
-      <Section title="ตัวช่วยตอนฝึกพูด">
+      <Section title={tx('ตัวช่วยตอนฝึกพูด', 'Speaking helpers')}>
         <ToggleRow
           on={s.autoMic}
           onToggle={() => update({ autoMic: !s.autoMic })}
           icon="🎤"
-          title="เปิดไมค์ให้เองหลัง AI พูดจบ"
-          desc="ไม่ต้องกดปุ่มไมค์ พูดตอบได้ทันที"
+          title={tx('เปิดไมค์ให้เองหลัง AI พูดจบ', 'Auto-open mic after the AI speaks')}
+          desc={tx('ไม่ต้องกดปุ่มไมค์ พูดตอบได้ทันที', 'No need to tap the mic — just answer')}
         />
         <div className="mt-2">
           <ToggleRow
             on={s.pronTips}
             onToggle={() => update({ pronTips: !s.pronTips })}
             icon="💡"
-            title="เคล็ดลับการออกเสียงตอนพูดไม่ตรง"
-            desc="โชว์คำอ่านภาษาไทย + วิธีวางลิ้น/ริมฝีปากของคำที่พลาด"
+            title={tx('เคล็ดลับการออกเสียงตอนพูดไม่ตรง', 'Pronunciation tips when you miss')}
+            desc={tx('โชว์คำอ่านภาษาไทย + วิธีวางลิ้น/ริมฝีปากของคำที่พลาด', 'Show Thai phonetic reading + tongue/lip position for missed words')}
           />
         </div>
       </Section>
 
-      <Section title="สมองของ AI (Scene role-play / Free talk)">
+      <Section title={tx('สมองของ AI (Scene role-play / Free talk)', 'AI brain (Scene role-play / Free talk)')}>
         <div className="mb-2 flex gap-2">
           <button
             type="button"
@@ -408,7 +357,7 @@ export default function Settings() {
             }`}
           >
             ☁️ Gemini cloud
-            <span className="block text-[11px] font-normal text-gray-400">ฉลาดสุด ต้องมีเน็ต+key</span>
+            <span className="block text-[11px] font-normal text-gray-400">{tx('ฉลาดสุด ต้องมีเน็ต+key', 'Smartest, needs internet + key')}</span>
           </button>
           <button
             type="button"
@@ -421,7 +370,7 @@ export default function Settings() {
             }`}
           >
             💻 Ollama (local)
-            <span className="block text-[11px] font-normal text-gray-400">เร็ว ฟรีไม่จำกัด บนเครื่องนี้</span>
+            <span className="block text-[11px] font-normal text-gray-400">{tx('เร็ว ฟรีไม่จำกัด บนเครื่องนี้', 'Fast, free, unlimited on this device')}</span>
           </button>
         </div>
 
@@ -433,20 +382,20 @@ export default function Settings() {
                 onClick={() => void loadOllamaModels(s.ollamaUrl)}
                 className="w-full rounded-xl border-2 border-bee-300 bg-bee-100 px-3 py-2.5 text-sm font-bold text-navy-900"
               >
-                🔌 เชื่อมต่อ Ollama
+                🔌 {tx('เชื่อมต่อ Ollama', 'Connect Ollama')}
               </button>
             )}
             {ollamaError && (
               <div className="rounded-xl bg-orange-50 px-3 py-2.5 text-xs leading-5 text-orange-700">
                 ⚠️ {ollamaError}
                 <button type="button" onClick={() => void loadOllamaModels(s.ollamaUrl)} className="ml-2 font-bold underline">
-                  ลองใหม่
+                  {tx('ลองใหม่', 'Retry')}
                 </button>
               </div>
             )}
             {ollamaModels && (
               <>
-                <p className="mb-1 text-xs font-bold text-leaf-600">✓ เชื่อมต่อ Ollama สำเร็จ</p>
+                <p className="mb-1 text-xs font-bold text-leaf-600">✓ {tx('เชื่อมต่อ Ollama สำเร็จ', 'Connected to Ollama')}</p>
                 <select
                   value={s.ollamaModel}
                   onChange={(e) => update({ ollamaModel: e.target.value })}
@@ -461,60 +410,76 @@ export default function Settings() {
               </>
             )}
             <p className="mt-2 text-xs leading-5 text-gray-500">
-              ใช้โมเดล AI ที่รันบนเครื่องนี้ผ่าน Ollama — <b>ตอบไว (~1-2 วิ) ฟรี ไม่จำกัด ออฟไลน์ได้</b>{' '}
-              เหมาะกับตอนใช้บน Mac (บนมือถือให้ใช้ Gemini) — โมเดลไทย-อังกฤษที่แนะนำ:{' '}
+              {tx('ใช้โมเดล AI ที่รันบนเครื่องนี้ผ่าน Ollama — ', 'Uses an AI model running on this machine via Ollama — ')}
+              <b>{tx('ตอบไว (~1-2 วิ) ฟรี ไม่จำกัด ออฟไลน์ได้', 'fast replies (~1-2 s), free, unlimited, works offline')}</b>{' '}
+              {tx(
+                'เหมาะกับตอนใช้บน Mac (บนมือถือให้ใช้ Gemini) — โมเดลไทย-อังกฤษที่แนะนำ:',
+                'Best on a Mac (use Gemini on mobile) — recommended Thai-English model:',
+              )}{' '}
               <code className="rounded bg-gray-100 px-1">scb10x/typhoon2.5-qwen3-4b</code>
             </p>
           </>
         )}
       </Section>
 
-      <Section title="Gemini API key (สำหรับ Scene role-play / Free talk)">
+      <Section title={tx('Gemini API key (สำหรับ Scene role-play / Free talk)', 'Gemini API key (for Scene role-play / Free talk)')}>
         <input
           value={s.geminiKey}
           onChange={(e) => update({ geminiKey: e.target.value.trim() })}
-          placeholder="วาง API key ที่นี่"
+          placeholder={tx('วาง API key ที่นี่', 'Paste your API key here')}
           type="password"
           autoComplete="off"
           className="w-full rounded-xl border-2 border-bee-200 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-bee-400"
         />
         <p className="mt-2 text-xs leading-5 text-gray-500">
-          สมัครฟรีที่{' '}
+          {tx('สมัครฟรีที่', 'Get one free at')}{' '}
           <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="font-bold text-blue-600 underline">
             aistudio.google.com/apikey
           </a>{' '}
-          (กด "Create API key") — โหมดบทเรียน Drill ใช้ได้โดยไม่ต้องมี key
+          {tx('(กด "Create API key") — โหมดบทเรียน Drill ใช้ได้โดยไม่ต้องมี key', '(tap "Create API key") — Drill lessons work without a key')}
         </p>
       </Section>
 
-      <Section title="ระบบ">
+      <Section title={tx('ระบบ', 'System')}>
         <div className="rounded-xl bg-white p-3 text-sm text-gray-600">
-          <div>🎤 รู้จำเสียงพูด (STT): {isSTTSupported() ? <b className="text-leaf-600">ใช้ได้</b> : <b className="text-red-500">browser นี้ไม่รองรับ — แนะนำ Chrome/Safari</b>}</div>
+          <div>
+            🎤 {tx('รู้จำเสียงพูด (STT)', 'Speech recognition (STT)')}:{' '}
+            {isSTTSupported() ? (
+              <b className="text-leaf-600">{tx('ใช้ได้', 'Available')}</b>
+            ) : (
+              <b className="text-red-500">{tx('browser นี้ไม่รองรับ — แนะนำ Chrome/Safari', 'Not supported in this browser — use Chrome/Safari')}</b>
+            )}
+          </div>
           <div className="mt-1">
-            🔊 เสียงพูด (TTS): {'speechSynthesis' in window ? <b className="text-leaf-600">ใช้ได้</b> : <b className="text-red-500">ไม่รองรับ</b>}
+            🔊 {tx('เสียงพูด (TTS)', 'Text-to-speech (TTS)')}:{' '}
+            {'speechSynthesis' in window ? (
+              <b className="text-leaf-600">{tx('ใช้ได้', 'Available')}</b>
+            ) : (
+              <b className="text-red-500">{tx('ไม่รองรับ', 'Not supported')}</b>
+            )}
           </div>
         </div>
         <button
           type="button"
           onClick={async () => {
             await clearTTSCache()
-            alert('ล้าง cache เสียงแล้ว')
+            alert(tx('ล้าง cache เสียงแล้ว', 'Voice cache cleared'))
           }}
           className="mt-3 w-full rounded-xl border-2 border-bee-200 bg-white py-2.5 text-sm font-bold text-navy-800"
         >
-          ล้าง cache เสียง AI
+          {tx('ล้าง cache เสียง AI', 'Clear AI voice cache')}
         </button>
         <button
           type="button"
           onClick={() => {
-            if (confirm('ล้างสถิติการเรียนทั้งหมด? (การตั้งค่าจะยังอยู่)')) {
+            if (confirm(tx('ล้างสถิติการเรียนทั้งหมด? (การตั้งค่าจะยังอยู่)', 'Reset all learning stats? (Your settings will be kept)'))) {
               resetProgress()
               location.reload()
             }
           }}
           className="mt-3 w-full rounded-xl border-2 border-red-200 bg-white py-2.5 text-sm font-bold text-red-500"
         >
-          ล้างสถิติการเรียน
+          {tx('ล้างสถิติการเรียน', 'Reset learning stats')}
         </button>
       </Section>
 

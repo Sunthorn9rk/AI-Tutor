@@ -12,19 +12,14 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       workbox: {
-        // ไฟล์ใหญ่ (wasm 21MB, ตัวละคร vrm 10MB) — ไม่ precache แต่ cache ตอนถูกใช้ครั้งแรกแทน
+        // ไฟล์ใหญ่ (wasm 21MB ของ Kokoro TTS) — ไม่ precache แต่ cache ตอนถูกใช้ครั้งแรกแทน
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        globIgnores: ['**/*.wasm', '**/*.vrm'],
+        globIgnores: ['**/*.wasm'],
         runtimeCaching: [
           {
             urlPattern: /\.wasm$/,
             handler: 'CacheFirst',
             options: { cacheName: 'wasm-cache', expiration: { maxEntries: 4 } },
-          },
-          {
-            urlPattern: /\.vrm$/,
-            handler: 'CacheFirst',
-            options: { cacheName: 'avatar-cache', expiration: { maxEntries: 2 } },
           },
         ],
       },

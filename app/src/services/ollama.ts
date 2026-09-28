@@ -2,6 +2,7 @@
 // ใช้ได้เมื่อเปิดแอปบนเครื่องเดียวกับที่รัน Ollama (เช่น Mac)
 
 import { getSettings } from './store'
+import { tx } from './i18n'
 import type { ChatMessage } from './gemini'
 
 export class OllamaError extends Error {
@@ -25,7 +26,7 @@ export async function listOllamaModels(url?: string): Promise<string[]> {
   try {
     res = await fetch(`${base}/api/tags`)
   } catch {
-    throw new OllamaError('ต่อ Ollama ไม่ได้', 'unreachable')
+    throw new OllamaError(tx('ต่อ Ollama ไม่ได้', "Can't connect to Ollama"), 'unreachable')
   }
   if (!res.ok) throw new OllamaError(`Ollama error ${res.status}`)
   const data = await res.json()
@@ -43,7 +44,7 @@ export async function ollamaChat(
   temperature = 0.8,
 ): Promise<string> {
   const { ollamaUrl, ollamaModel } = getSettings()
-  if (!ollamaModel) throw new OllamaError('ยังไม่ได้เลือกโมเดล Ollama (ตั้งค่าได้ในหน้า Settings)', 'no-model')
+  if (!ollamaModel) throw new OllamaError(tx('ยังไม่ได้เลือกโมเดล Ollama (ตั้งค่าได้ในหน้า Settings)', 'No Ollama model selected yet (choose one in Settings)'), 'no-model')
 
   const base = ollamaUrl.replace(/\/$/, '')
   let res: Response
@@ -63,15 +64,15 @@ export async function ollamaChat(
       }),
     })
   } catch {
-    throw new OllamaError('ต่อ Ollama ไม่ได้ — เช็คว่าแอป Ollama เปิดอยู่บนเครื่องนี้', 'unreachable')
+    throw new OllamaError(tx('ต่อ Ollama ไม่ได้ — เช็คว่าแอป Ollama เปิดอยู่บนเครื่องนี้', "Can't connect to Ollama — make sure the Ollama app is running on this computer"), 'unreachable')
   }
-  if (res.status === 404) throw new OllamaError(`ไม่พบโมเดล ${ollamaModel} — ลองเลือกใหม่ในหน้าตั้งค่า`, 'no-model')
+  if (res.status === 404) throw new OllamaError(tx(`ไม่พบโมเดล ${ollamaModel} — ลองเลือกใหม่ในหน้าตั้งค่า`, `Model ${ollamaModel} not found — pick another one in Settings`), 'no-model')
   if (!res.ok) throw new OllamaError(`Ollama error ${res.status}`)
 
   const data = await res.json()
   let text: string = data?.message?.content ?? ''
   // กันโมเดลสาย reasoning แอบใส่ความคิดมาในคำตอบ
   text = text.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
-  if (!text) throw new OllamaError('ไม่ได้รับคำตอบจากโมเดล')
+  if (!text) throw new OllamaError(tx('ไม่ได้รับคำตอบจากโมเดล', 'No response from the model'))
   return text
 }

@@ -2,6 +2,7 @@
 // สมัคร key ฟรีได้ที่ https://aistudio.google.com/apikey
 
 import { getSettings } from './store'
+import { tx } from './i18n'
 import type { Scene } from '../content/schema'
 
 // ลองตามลำดับ — บาง key (บัญชีใหม่) ใช้โมเดลรุ่นเก่าไม่ได้แล้ว (404 "no longer available to new users")
@@ -64,18 +65,18 @@ async function callModel(
       }),
     })
   } catch {
-    throw new GeminiError('ต่ออินเทอร์เน็ตไม่ได้ ลองใหม่อีกครั้ง', 'network')
+    throw new GeminiError(tx('ต่ออินเทอร์เน็ตไม่ได้ ลองใหม่อีกครั้ง', 'No internet connection. Please try again.'), 'network')
   }
 
-  if (res.status === 404) throw new GeminiError(`โมเดล ${model} ใช้ไม่ได้กับ key นี้`, 'not-found')
-  if (res.status === 429) throw new GeminiError('โควตาฟรีของวันนี้หมดชั่วคราว รอสักครู่แล้วลองใหม่', 'quota')
+  if (res.status === 404) throw new GeminiError(tx(`โมเดล ${model} ใช้ไม่ได้กับ key นี้`, `Model ${model} isn't available for this key`), 'not-found')
+  if (res.status === 429) throw new GeminiError(tx('โควตาฟรีของวันนี้หมดชั่วคราว รอสักครู่แล้วลองใหม่', 'Free quota is used up for now. Wait a moment and try again.'), 'quota')
   if (!res.ok) throw new GeminiError(`Gemini error ${res.status}`, 'other')
 
   const data = await res.json()
   // รวมทุก part ที่มี text (โมเดลรุ่นใหม่อาจส่งหลาย part)
   const parts: { text?: string }[] = data?.candidates?.[0]?.content?.parts ?? []
   const text = parts.map((p) => p.text ?? '').join('')
-  if (!text) throw new GeminiError('ไม่ได้รับคำตอบจาก AI', 'other')
+  if (!text) throw new GeminiError(tx('ไม่ได้รับคำตอบจาก AI', 'No response from the AI'), 'other')
   return text
 }
 
@@ -91,12 +92,12 @@ async function callGemini(
     try {
       return await ollamaChat(system, messages, json, temperature)
     } catch (e) {
-      throw new GeminiError(e instanceof OllamaError ? e.message : 'Ollama มีปัญหา ลองใหม่อีกครั้ง', 'other')
+      throw new GeminiError(e instanceof OllamaError ? e.message : tx('Ollama มีปัญหา ลองใหม่อีกครั้ง', 'Ollama had a problem. Please try again.'), 'other')
     }
   }
 
   const key = getSettings().geminiKey.trim()
-  if (!key) throw new GeminiError('ยังไม่ได้ใส่ Gemini API key (ตั้งค่าได้ในหน้า Settings)', 'no-key')
+  if (!key) throw new GeminiError(tx('ยังไม่ได้ใส่ Gemini API key (ตั้งค่าได้ในหน้า Settings)', 'No Gemini API key yet (add one in Settings)'), 'no-key')
 
   // ไล่ลองโมเดลจนกว่าจะเจอตัวที่ key นี้ใช้ได้ แล้วจำไว้ใช้ตลอด
   for (const model of getPreferredModels()) {
@@ -109,7 +110,7 @@ async function callGemini(
       throw e
     }
   }
-  throw new GeminiError('ไม่พบโมเดล Gemini ที่ใช้ได้กับ key นี้ — ลองสร้าง key ใหม่ที่ aistudio.google.com', 'not-found')
+  throw new GeminiError(tx('ไม่พบโมเดล Gemini ที่ใช้ได้กับ key นี้ — ลองสร้าง key ใหม่ที่ aistudio.google.com', 'No Gemini model works with this key — try creating a new key at aistudio.google.com'), 'not-found')
 }
 
 export interface SceneTurnResult {

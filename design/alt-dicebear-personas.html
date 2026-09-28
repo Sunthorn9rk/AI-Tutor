@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>AI Tutor — Personas + lip-sync</title>
+<style>
+  :root { --bg:#12102b; --panel:#1b1940; --ink:#f4f1ff; --muted:#a49ecb; --bee:#ffc53d; }
+  *{box-sizing:border-box}
+  body{margin:0;padding:22px;background:var(--bg);color:var(--ink);
+       font:14px/1.6 system-ui,-apple-system,sans-serif;display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+  h1{font-size:17px;margin:0 0 4px}
+  h2{font-size:12.5px;margin:20px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+
+  .phone{width:310px;height:640px;flex:none;border-radius:42px;padding:10px;background:#2b2b33;
+         box-shadow:0 30px 70px rgba(0,0,0,.55)}
+  .screen{width:100%;height:100%;border-radius:34px;overflow:hidden;position:relative;
+          background:#17143a;display:flex;flex-direction:column}
+  .stage{flex:1;position:relative;overflow:hidden;display:grid;place-items:center;background:#ffdfbf}
+  .stage svg{width:132%;height:132%;display:block}
+  .callbar{height:92px;background:#0d0b22;display:flex;align-items:center;justify-content:center}
+  .hangup{width:56px;height:56px;border-radius:50%;border:0;background:#ef4444;color:#fff;
+          font-size:22px;cursor:pointer}
+  .caption{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(8,6,26,.84);
+           border-radius:15px;padding:9px 13px;font-size:13.5px;min-height:40px}
+  .caption b{color:var(--bee)}
+  .calling{position:absolute;inset:0;background:#0a0820;display:none;flex-direction:column;
+           align-items:center;justify-content:center;gap:20px;z-index:5}
+  .calling.on{display:flex}
+  .calling .ring{width:140px;height:140px;border-radius:50%;overflow:hidden;border:3px solid #35e0c8;
+                 display:grid;place-items:center;background:#ffdfbf;animation:pulse 1.4s infinite}
+  .calling .ring svg{width:100%;height:100%}
+  @keyframes pulse{50%{box-shadow:0 0 0 14px rgba(53,224,200,.16)}}
+  .brand{font-size:12px;letter-spacing:.22em;color:#35e0c8;font-weight:800}
+
+  .panel{flex:1;min-width:340px;max-width:640px}
+  textarea,select{width:100%;background:var(--panel);color:var(--ink);border:1px solid #332e63;
+                  border-radius:12px;padding:10px 12px;font:inherit}
+  .row{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px;align-items:center}
+  button.act{background:var(--bee);color:#241c00;border:0;border-radius:12px;padding:10px 18px;
+             font-weight:800;cursor:pointer}
+  button.ghost{background:transparent;color:var(--ink);border:1px solid #3b3570;border-radius:12px;
+               padding:10px 16px;cursor:pointer}
+  .seeds{display:flex;gap:8px;flex-wrap:wrap}
+  .seeds img{width:66px;height:66px;border-radius:12px;background:#241f52;cursor:pointer;
+             border:2px solid transparent}
+  .seeds img.on{border-color:var(--bee)}
+  .chart{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:7px}
+  .chip{background:var(--panel);border:1px solid #332e63;border-radius:11px;padding:5px 3px 3px;
+        text-align:center;cursor:pointer}
+  .chip.on{border-color:var(--bee);background:#2a2450}
+  .chip svg{display:block;width:100%;height:46px;background:#ffdfbf;border-radius:7px}
+  .chip span{font-size:10px;color:var(--muted);font-family:ui-monospace,monospace}
+  .live{font-family:ui-monospace,monospace;font-size:12px;color:#7ce7d0;min-height:18px}
+  .meta{font-size:12.5px;color:var(--muted)}
+  .meta b{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="screen">
+    <div class="stage" id="stage">
+      <div class="caption" id="caption">แตะ <b>Call</b> เพื่อเริ่ม</div>
+      <div class="calling" id="calling">
+        <div class="brand">AI TUTOR</div>
+        <div class="ring" id="ring"></div>
+        <p id="callingText" style="margin:0;font-size:17px;font-weight:700">Calling Mia…</p>
+      </div>
+    </div>
+    <div class="callbar"><button class="hangup" id="hangup">✕</button></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h1>Personas (Draftbit) + ชุดปาก viseme ที่วาดเพิ่ม</h1>
+  <p class="sub">
+    ตัวละครเป็น SVG ของ DiceBear สไตล์ <b>personas</b> (3.7 KB) — ปากกับตาเป็น group เดี่ยวที่สลับได้
+    ผมวาดปากเพิ่มอีก 13 แบบในสไตล์และพิกัดเดียวกัน แล้วต่อเข้าระบบ lip-sync เดิม
+  </p>
+
+  <h2>เลือกตัวละคร</h2>
+  <div class="seeds" id="seeds"></div>
+
+  <h2>ลองพูด</h2>
+  <textarea id="text" rows="2">Hi! I'm Mia. Shall we practise ordering coffee together?</textarea>
+  <div class="row">
+    <button class="act" id="call">📞 Call</button>
+    <button class="act" id="speak">▶︎ พูดประโยคนี้</button>
+    <button class="ghost" id="loop">↻ วนลูป</button>
+    <button class="ghost" id="stop">■ หยุด</button>
+    <label class="meta">เสียง <select id="voice" style="width:auto;padding:6px 8px"></select></label>
+  </div>
+  <p class="live" id="live"></p>
+
+  <h2>ชุดปาก 13 แบบ (วาดเพิ่มในสไตล์ personas)</h2>
+  <div class="chart" id="chart"></div>
+
+  <h2>ของเดิมที่ DiceBear ให้มา 7 แบบ — เทียบให้เห็นว่ากลมกลืนกัน</h2>
+  <div class="chart" id="native"></div>
+</div>
+
+<script>
+/* ---------- พิกัดจาก SVG จริงของ personas ----------
+   viewBox 0 0 64 64 · ปาก = <g transform="translate(23 36)"> · ตา = <g transform="translate(20 24)">
+   ปากวาดในกรอบ x 4..14, y 1..8 จุดกึ่งกลาง (9,5) · สี #1B0640 ฟัน #fff ลิ้น #DC5C7A        */
+const DARK = '#1B0640', TEETH = '#fff', TONGUE = '#DC5C7A';
+
+const VISEMES = {
+  rest: { open:0,   svg:`<path d="M5 5.87a1 1 0 1 1 1-1.74A6 6 0 0 0 9 5a6 6 0 0 0 3-.87 1 1 0 1 1 1 1.74A8 8 0 0 1 9 7a8 8 0 0 1-4-1.13Z" fill="${DARK}"/>` },
+  MBP:  { open:0,   svg:`<rect x="4.6" y="4.45" width="8.8" height="1.25" rx=".62" fill="${DARK}"/>` },
+  FV:   { open:.12, svg:`<rect x="5" y="4.7" width="8" height="1.1" rx=".55" fill="${DARK}"/>
+                          <rect x="5.7" y="3.6" width="6.6" height="1.1" rx=".45" fill="${TEETH}"/>` },
+  SS:   { open:.16, svg:`<ellipse cx="9" cy="5" rx="3.8" ry="1" fill="${DARK}"/>
+                          <rect x="5.9" y="4.25" width="6.2" height=".85" rx=".42" fill="${TEETH}"/>` },
+  E:    { open:.5,  svg:`<ellipse cx="9" cy="5" rx="4.2" ry="1.85" fill="${DARK}"/>
+                          <rect x="5.5" y="3.45" width="7" height=".95" rx=".47" fill="${TEETH}"/>
+                          <ellipse cx="9" cy="6.3" rx="2.2" ry=".7" fill="${TONGUE}"/>` },
+  AA:   { open:1,   svg:`<ellipse cx="9" cy="5.2" rx="3.4" ry="3.2" fill="${DARK}"/>
+                          <rect x="6.3" y="2.35" width="5.4" height=".95" rx=".47" fill="${TEETH}"/>
+                          <ellipse cx="9" cy="7.4" rx="1.9" ry=".95" fill="${TONGUE}"/>` },
+  KG:   { open:.5,  svg:`<ellipse cx="9" cy="5" rx="3.1" ry="2.4" fill="${DARK}"/>
+                          <rect x="6.3" y="2.95" width="5.4" height=".9" rx=".45" fill="${TEETH}"/>` },
+  O:    { open:.62, svg:`<ellipse cx="9" cy="5" rx="2.4" ry="2.85" fill="${DARK}"/>` },
+  U:    { open:.34, svg:`<ellipse cx="9" cy="5" rx="1.5" ry="1.9" fill="${DARK}"/>` },
+  CH:   { open:.42, svg:`<ellipse cx="9" cy="5" rx="2.35" ry="2.45" fill="${DARK}"/>
+                          <ellipse cx="9" cy="5" rx="2.35" ry="2.45" fill="none" stroke="${TONGUE}" stroke-width=".5"/>` },
+  RR:   { open:.3,  svg:`<ellipse cx="9" cy="5" rx="2.2" ry="1.85" fill="${DARK}"/>` },
+  DDTN: { open:.32, svg:`<ellipse cx="9" cy="5" rx="2.7" ry="1.95" fill="${DARK}"/>
+                          <ellipse cx="9" cy="4.25" rx="1.7" ry=".8" fill="${TONGUE}"/>` },
+  TH:   { open:.3,  svg:`<ellipse cx="9" cy="5" rx="2.8" ry="1.75" fill="${DARK}"/>
+                          <rect x="6.5" y="3.7" width="5" height=".75" rx=".37" fill="${TEETH}"/>
+                          <ellipse cx="9" cy="5.8" rx="1.5" ry=".9" fill="${TONGUE}"/>` },
+};
+
+/* ---------- ตาราง viseme แบบ rule-based (ไม่เรียกโมเดลใด ๆ) ---------- */
+const DIGRAPHS=[['th','TH'],['sh','CH'],['ch','CH'],['ph','FV'],['ng','KG'],['oo','U'],['ou','O'],
+                ['ow','O'],['ee','E'],['ea','E'],['ai','E'],['ay','E'],['oa','O'],['qu','KG']];
+const SINGLE={a:'AA',e:'E',i:'E',y:'E',o:'O',u:'U',w:'U',m:'MBP',b:'MBP',p:'MBP',f:'FV',v:'FV',
+              d:'DDTN',t:'DDTN',n:'DDTN',l:'DDTN',k:'KG',g:'KG',c:'KG',q:'KG',x:'KG',
+              s:'SS',z:'SS',j:'CH',r:'RR',h:'AA'};
+function wordToVisemes(word){
+  let w=word.toLowerCase().replace(/[^a-z']/g,'');
+  if(w.length>2&&w.endsWith('e')) w=w.slice(0,-1);
+  const out=[]; let i=0;
+  while(i<w.length){
+    const two=w.slice(i,i+2), dg=DIGRAPHS.find(([d])=>d===two);
+    if(dg){out.push(dg[1]); i+=2; continue}
+    const v=SINGLE[w[i]]; if(v) out.push(v); i++;
+  }
+  const dd=out.filter((v,k)=>v!==out[k-1]);
+  return dd.length?dd:['AA'];
+}
+
+/* ---------- ประกอบตัวละคร ---------- */
+const SEEDS=['Mia','Emma','Nina','Sofia','Yuki','Lily'];
+const MOUTH_RE=/<g transform="translate\(23 36\)">[\s\S]*?<\/g>/;
+const EYES_RE =/<g transform="translate\(20 24\)">[\s\S]*?<\/g>/;
+let baseSvg='', eyesOpen='', eyesShut='', seed='Mia';
+
+async function loadSeed(s){
+  seed=s;
+  baseSvg = await (await fetch(`db/probe_${s}.svg`)).text();
+  eyesOpen = (baseSvg.match(EYES_RE)||[''])[0];
+  render();
+  [...document.querySelectorAll('.seeds img')].forEach(i=>i.classList.toggle('on', i.dataset.s===s));
+}
+
+let current='rest', shut=false;
+function render(){
+  const mouth = `<g transform="translate(23 36)">${VISEMES[current].svg}</g>`;
+  const eyes  = shut ? eyesShut : eyesOpen;
+  const svg = baseSvg.replace(MOUTH_RE, mouth).replace(EYES_RE, eyes);
+  const stage=document.getElementById('stage');
+  const old=stage.querySelector('svg'); if(old) old.remove();
+  stage.insertAdjacentHTML('afterbegin', svg);
+  const ring=document.getElementById('ring');
+  ring.innerHTML = svg;
+}
+function setViseme(n){
+  current = VISEMES[n] ? n : 'rest';
+  render();
+  document.getElementById('live').textContent = `viseme: ${current}   open: ${VISEMES[current].open.toFixed(2)}`;
+  [...document.querySelectorAll('.chip')].forEach(c=>c.classList.toggle('on', c.dataset.v===current));
+}
+
+/* กะพริบตา: สลับ group ตาเป็นแบบ sleep */
+setInterval(()=>{ if(Math.random()<.22){ shut=true; render(); setTimeout(()=>{shut=false; render()}, 130) } }, 1400);
+
+/* ---------- UI ---------- */
+document.getElementById('seeds').innerHTML =
+  SEEDS.map(s=>`<img src="db/probe_${s}.svg" data-s="${s}" title="${s}">`).join('');
+document.getElementById('seeds').addEventListener('click', e=>{
+  const img=e.target.closest('img'); if(img) loadSeed(img.dataset.s);
+});
+
+const mini = (svg) => `<svg viewBox="26 35 16 11">${svg}</svg>`;
+document.getElementById('chart').innerHTML = Object.entries(VISEMES).map(([k,v])=>
+  `<div class="chip" data-v="${k}">${mini(`<g transform="translate(23 36)">${v.svg}</g>`)}<span>${k}</span></div>`).join('');
+document.getElementById('chart').addEventListener('click', e=>{
+  const c=e.target.closest('.chip'); if(c) setViseme(c.dataset.v);
+});
+
+/* ของเดิมจาก DiceBear เอามาเทียบสไตล์ */
+const NATIVE = {
+  smile:`<path d="M5 5.87a1 1 0 1 1 1-1.74A6 6 0 0 0 9 5a6 6 0 0 0 3-.87 1 1 0 1 1 1 1.74A8 8 0 0 1 9 7a8 8 0 0 1-4-1.13Z" fill="${DARK}"/>`,
+  frown:`<path d="M5 4.13a1 1 0 1 0 1 1.74A6 6 0 0 1 9 5a6 6 0 0 1 3 .87 1 1 0 1 0 1-1.74A8 8 0 0 0 9 3a8 8 0 0 0-4 1.13Z" fill="${DARK}"/>`,
+  surprise:`<ellipse cx="9" cy="5" rx="2" ry="2.5" fill="${DARK}"/>`,
+  bigSmile:`<path d="M6 3h6v1a3 3 0 0 1-6 0V3Z" fill="#fff"/>`,
+  smirk:`<path d="M7.32 5.73a.75.75 0 0 1 .36-1.46c2.44.61 4.17.32 5.29-.8a.75.75 0 1 1 1.06 1.06c-1.54 1.54-3.81 1.92-6.71 1.2Z" fill="${DARK}"/>`,
+  lips:`<path d="M5 5h8s-1 2.5-4 2.5S5 5 5 5Z" fill="#DC5C7A"/><path d="M5.39 4.22A2.1 2.1 0 0 1 9 4a2.1 2.1 0 0 1 3.61.22l.4.78H4.99l.39-.78Z" fill="#F57B98"/>`,
+};
+document.getElementById('native').innerHTML = Object.entries(NATIVE).map(([k,v])=>
+  `<div class="chip">${mini(`<g transform="translate(23 36)">${v}</g>`)}<span>${k}</span></div>`).join('');
+
+/* ---------- พูด ---------- */
+const synth=speechSynthesis, voiceSel=document.getElementById('voice');
+function fillVoices(){
+  const vs=synth.getVoices().filter(v=>v.lang.toLowerCase().startsWith('en'));
+  voiceSel.innerHTML=vs.map((v,i)=>`<option value="${i}">${v.name}</option>`).join('');
+  fillVoices.list=vs;
+}
+fillVoices(); synth.onvoiceschanged=fillVoices;
+
+let timers=[], looping=false;
+const clearT=()=>{timers.forEach(clearTimeout); timers=[]};
+function speak(){
+  clearT(); synth.cancel();
+  const text=document.getElementById('text').value.trim(); if(!text) return;
+  const u=new SpeechSynthesisUtterance(text);
+  const v=fillVoices.list?.[voiceSel.value]; if(v) u.voice=v;
+  u.lang='en-US'; u.rate=.95;
+  document.getElementById('caption').innerHTML=`<b>${seed}</b> · ${text}`;
+  u.onboundary=ev=>{
+    if(ev.name==='sentence') return;
+    const word=(text.slice(ev.charIndex).match(/^[A-Za-z']+/)||[''])[0]; if(!word) return;
+    const seq=wordToVisemes(word), ms=Math.max(140, word.length*78/.95), step=ms/seq.length;
+    seq.forEach((n,i)=>timers.push(setTimeout(()=>setViseme(n), i*step)));
+    timers.push(setTimeout(()=>setViseme('MBP'), ms));
+  };
+  u.onend=()=>{clearT(); setViseme('rest'); if(looping) timers.push(setTimeout(speak,700))};
+  u.onerror=u.onend;
+  synth.speak(u);
+}
+document.getElementById('speak').onclick=()=>{looping=false; speak()};
+document.getElementById('loop').onclick=()=>{looping=true; speak()};
+document.getElementById('stop').onclick=()=>{looping=false; clearT(); synth.cancel(); setViseme('rest')};
+document.getElementById('hangup').onclick=()=>{looping=false; clearT(); synth.cancel(); setViseme('rest');
+  document.getElementById('caption').innerHTML='วางสายแล้ว — แตะ <b>Call</b> อีกครั้ง'};
+document.getElementById('call').onclick=()=>{
+  const c=document.getElementById('calling'); c.classList.add('on');
+  document.getElementById('callingText').textContent=`Calling ${seed}…`;
+  setTimeout(()=>{c.classList.remove('on'); speak()},1800);
+};
+
+/* โหลดตาแบบหลับ แล้วเริ่ม */
+(async()=>{
+  const s = await (await fetch('db/eyes_sleep.svg')).text();
+  eyesShut = (s.match(EYES_RE)||[''])[0];
+  await loadSeed('Mia');
+  setViseme('rest');
+})();
+</script>
+</body>
+</html>

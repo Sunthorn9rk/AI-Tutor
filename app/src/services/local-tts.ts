@@ -4,20 +4,21 @@
 // - รันใน Web Worker กัน UI ค้าง
 
 import { getSettings } from './store'
+import { currentVoice } from './speaker'
 import { ttsCacheGet, ttsCachePut } from './tts-cache'
 import { getAudioContext, getSpeechOutput } from './audio-bus'
 
 const SAMPLE_RATE = 24000 // Kokoro ให้เสียง 24kHz mono
 
-export const LOCAL_VOICES: { id: string; label: string }[] = [
-  { id: 'af_heart', label: 'Heart — หญิง US (แนะนำ)' },
-  { id: 'af_bella', label: 'Bella — หญิง US สดใส' },
-  { id: 'af_nicole', label: 'Nicole — หญิง US นุ่มลึก' },
-  { id: 'af_sarah', label: 'Sarah — หญิง US สุภาพ' },
-  { id: 'am_michael', label: 'Michael — ชาย US อบอุ่น' },
-  { id: 'am_adam', label: 'Adam — ชาย US หนักแน่น' },
-  { id: 'bf_emma', label: 'Emma — หญิง UK' },
-  { id: 'bm_george', label: 'George — ชาย UK' },
+export const LOCAL_VOICES: { id: string; label: string; labelEn: string }[] = [
+  { id: 'af_heart', label: 'Heart — หญิง US (แนะนำ)', labelEn: 'Heart — female US (recommended)' },
+  { id: 'af_bella', label: 'Bella — หญิง US สดใส', labelEn: 'Bella — female US, bright' },
+  { id: 'af_nicole', label: 'Nicole — หญิง US นุ่มลึก', labelEn: 'Nicole — female US, smooth' },
+  { id: 'af_sarah', label: 'Sarah — หญิง US สุภาพ', labelEn: 'Sarah — female US, polite' },
+  { id: 'am_michael', label: 'Michael — ชาย US อบอุ่น', labelEn: 'Michael — male US, warm' },
+  { id: 'am_adam', label: 'Adam — ชาย US หนักแน่น', labelEn: 'Adam — male US, firm' },
+  { id: 'bf_emma', label: 'Emma — หญิง UK', labelEn: 'Emma — female UK' },
+  { id: 'bm_george', label: 'George — ชาย UK', labelEn: 'George — male UK' },
 ]
 
 export type LocalTTSStatus = 'idle' | 'downloading' | 'ready' | 'error'
@@ -139,7 +140,7 @@ async function getOrGenerate(text: string, voice: string): Promise<Float32Array>
 
 /** พูดด้วยเสียง Kokoro — โยน error ถ้าโมเดลยังใช้ไม่ได้ (ให้ tts.ts fallback เสียงระบบ) */
 export async function speakLocal(text: string, playbackRate = 1, onStart?: () => void): Promise<void> {
-  const samples = await getOrGenerate(text, getSettings().localVoice)
+  const samples = await getOrGenerate(text, currentVoice().kokoro)
 
   const c = getAudioContext()
   await c.resume()
@@ -164,15 +165,17 @@ export async function speakLocal(text: string, playbackRate = 1, onStart?: () =>
 
 // ---------- prefetch (generate ล่วงหน้า ไม่มีลิมิต แค่กัน CPU ทำงานซ้อน) ----------
 
-const queue: string[] = []
+// เก็บเสียงไว้กับประโยคตั้งแต่ตอนเข้าคิว — ถ้าไปอ่านตอน pump คิวที่ค้างอยู่จะได้เสียงของผู้พูดคนถัดไป
+const queue: { text: string; voice: string }[] = []
 let pumping = false
 
 export function prefetchLocalTTS(texts: string[]) {
   const { ttsEngine } = getSettings()
   if (ttsEngine !== 'local') return
+  const voice = currentVoice().kokoro
   for (const t of texts) {
     const text = t.trim()
-    if (text && !queue.includes(text)) queue.push(text)
+    if (text && !queue.some((q) => q.text === text && q.voice === voice)) queue.push({ text, voice })
   }
   void pump()
 }
@@ -182,14 +185,14 @@ async function pump() {
   pumping = true
   try {
     while (queue.length) {
-      const { ttsEngine, localVoice } = getSettings()
+      const { ttsEngine } = getSettings()
       if (ttsEngine !== 'local') break
-      const text = queue[0]
+      const { text, voice } = queue[0]
       try {
-        const cacheKey = `local|${localVoice}|${text}`
+        const cacheKey = `local|${voice}|${text}`
         if (!(await ttsCacheGet(cacheKey))) {
           await ensureLocalTTS()
-          const { samples } = await generate(text, localVoice)
+          const { samples } = await generate(text, voice)
           await ttsCachePut(cacheKey, samples.buffer.slice(0) as ArrayBuffer)
         }
       } catch {

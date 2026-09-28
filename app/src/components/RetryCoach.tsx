@@ -1,4 +1,5 @@
 import type { WordDiff } from '../services/matcher'
+import { tx } from '../services/i18n'
 
 interface Props {
   diff: WordDiff[]
@@ -18,7 +19,7 @@ export default function RetryCoach({ diff, heard, reading, readingLoading, trick
   return (
     <div className="pop-in w-full overflow-hidden rounded-2xl bg-white shadow-lg">
       <div className="bg-bee-500 px-4 py-2 text-center text-sm font-bold text-white">
-        {listening ? '🎤 กำลังฟัง… ลองพูดอีกครั้ง' : 'เกือบแล้ว! ลองพูดอีกครั้ง 💪'}
+        {listening ? tx('🎤 กำลังฟัง… ลองพูดอีกครั้ง', '🎤 Listening… try again') : tx('เกือบแล้ว! ลองพูดอีกครั้ง 💪', 'Almost! Try again 💪')}
       </div>
       <div className="px-4 py-3">
         {/* เป้าหมาย: เขียว = พูดได้แล้ว, แดงขีดเส้น = ยังพลาด */}
@@ -35,15 +36,15 @@ export default function RetryCoach({ diff, heard, reading, readingLoading, trick
         {(reading || readingLoading) && (
           <div className="mt-1 text-center text-sm text-navy-700">
             {readingLoading ? (
-              <span className="animate-pulse text-gray-400">🔤 กำลังถอดคำอ่าน…</span>
+              <span className="animate-pulse text-gray-400">🔤 {tx('กำลังถอดคำอ่าน…', 'Getting Thai reading…')}</span>
             ) : (
               <>
-                🔤 อ่านว่า <b>{reading}</b>
+                🔤 {tx('อ่านว่า', 'Reads as')} <b>{reading}</b>
               </>
             )}
           </div>
         )}
-        {heard && <div className="mt-1 text-center text-xs italic text-gray-400">ได้ยินว่า: "{heard}"</div>}
+        {heard && <div className="mt-1 text-center text-xs italic text-gray-400">{tx('ได้ยินว่า:', 'Heard:')} "{heard}"</div>}
 
         {tricks.length > 0 && (
           <ul className="mt-2.5 space-y-1 rounded-xl bg-bee-100/70 px-3 py-2 text-[13px] leading-6 text-navy-800">
@@ -59,14 +60,14 @@ export default function RetryCoach({ diff, heard, reading, readingLoading, trick
             onClick={() => onListen(false)}
             className="rounded-full bg-bee-100 px-3.5 py-1.5 text-xs font-bold text-navy-800 active:scale-95"
           >
-            🔊 ฟังตัวอย่าง
+            🔊 {tx('ฟังตัวอย่าง', 'Listen')}
           </button>
           <button
             type="button"
             onClick={() => onListen(true)}
             className="rounded-full bg-bee-100 px-3.5 py-1.5 text-xs font-bold text-navy-800 active:scale-95"
           >
-            🐢 ฟังช้า ๆ
+            🐢 {tx('ฟังช้า ๆ', 'Listen slowly')}
           </button>
         </div>
       </div>

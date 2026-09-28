@@ -1,30 +1,9 @@
 # Credits & third-party assets
 
-## 3D avatars (VRM)
+## Tutor character
 
-The app renders a VRM avatar with [`@pixiv/three-vrm`](https://github.com/pixiv/three-vrm).
-
-**Shipped in this repo**
-
-| File | Model | Source |
-|---|---|---|
-| `app/public/avatars/tutor.vrm` | Seed-san | Official VRM Consortium mascot |
-
-**Not shipped in this repo — deliberately**
-
-Two avatars used during local development are excluded, because models published by individual
-creators on VRoid Hub carry per-model terms set by their author and **redistribution is commonly
-not permitted** even when personal use is:
-
-| File | Model | Author |
-|---|---|---|
-| `shino.vrm` | Shino | Official VRoid sample |
-| `lia.vrm` | Lia | WierdlyA (VRoid Hub) |
-
-They are listed here for attribution, not distributed. Anyone running the app can supply their
-own `.vrm` from **Settings → avatar**, which is stored in IndexedDB on their own device
-(`services/avatar-file.ts`). To restore them locally, drop the files into
-`app/public/avatars/` and uncomment the two entries in `BUNDLED_AVATARS`.
+The tutor is an original flat-vector SVG character drawn for this app (`app/src/components/FlatTutor.tsx`).
+No third-party character assets are shipped.
 
 ## Models & libraries
 

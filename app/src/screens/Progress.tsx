@@ -1,6 +1,7 @@
 import { getProgress } from '../services/store'
 import { course } from '../content/course'
 import BottomNav from '../components/BottomNav'
+import { tx, uiLang } from '../services/i18n'
 
 export default function Progress() {
   const p = getProgress()
@@ -17,21 +18,21 @@ export default function Progress() {
 
   return (
     <div className="mx-auto max-w-md px-5 pb-24 pt-[calc(env(safe-area-inset-top)+20px)]">
-      <h1 className="mb-5 text-2xl font-extrabold text-navy-900">สถิติของคุณ 📊</h1>
+      <h1 className="mb-5 text-2xl font-extrabold text-navy-900">{tx('สถิติของคุณ', 'Your stats')} 📊</h1>
 
       <div className="mb-5 grid grid-cols-3 gap-3">
-        <StatCard icon="⚡" value={p.streak} label="streak (วัน)" />
-        <StatCard icon="📚" value={p.wordsLearned} label="คำที่ฝึกพูด" />
-        <StatCard icon="✅" value={`${p.completedLessons.length}/${totalLessons}`} label="บทเรียนจบ" />
+        <StatCard icon="⚡" value={p.streak} label={tx('streak (วัน)', 'streak (days)')} />
+        <StatCard icon="📚" value={p.wordsLearned} label={tx('คำที่ฝึกพูด', 'Words spoken')} />
+        <StatCard icon="✅" value={`${p.completedLessons.length}/${totalLessons}`} label={tx('บทเรียนจบ', 'Lessons done')} />
       </div>
 
       <div className="rounded-2xl bg-white p-4 shadow-sm">
         <div className="mb-3 font-bold text-navy-900">
-          เดือนนี้ ({now.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })})
+          {tx('เดือนนี้', 'This month')} ({now.toLocaleDateString(tx('th-TH', 'en-US'), { month: 'long', year: 'numeric' })})
         </div>
         <div className="grid grid-cols-7 gap-1.5 text-center text-xs">
-          {['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map((d) => (
-            <div key={d} className="py-1 font-bold text-gray-400">
+          {(uiLang() === 'en' ? ['S', 'M', 'T', 'W', 'T', 'F', 'S'] : ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']).map((d, i) => (
+            <div key={i} className="py-1 font-bold text-gray-400">
               {d}
             </div>
           ))}

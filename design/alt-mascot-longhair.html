@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>AI Tutor — มาสคอตเต็มตัว</title>
+<style>
+  :root{--bg:#12102b;--panel:#1b1940;--ink:#f4f1ff;--muted:#a49ecb;--bee:#ffc53d}
+  *{box-sizing:border-box}
+  body{margin:0;padding:22px;background:var(--bg);color:var(--ink);
+       font:14px/1.6 system-ui,-apple-system,sans-serif;display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+  h1{font-size:17px;margin:0 0 4px}
+  h2{font-size:12.5px;margin:18px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .stageWrap{flex:none;width:340px}
+  .stage{width:340px;height:408px;border-radius:24px;overflow:hidden;background:#F4F4F4;
+         box-shadow:0 20px 50px rgba(0,0,0,.45)}
+  .stage svg{width:100%;height:100%;display:block}
+  .caption{margin-top:10px;background:var(--panel);border:1px solid #332e63;border-radius:14px;
+           padding:9px 13px;font-size:13.5px;min-height:42px}
+  .caption b{color:var(--bee)}
+  .panel{flex:1;min-width:340px;max-width:640px}
+  textarea,select{width:100%;background:var(--panel);color:var(--ink);border:1px solid #332e63;
+                  border-radius:12px;padding:10px 12px;font:inherit}
+  .row{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px;align-items:center}
+  button.act{background:var(--bee);color:#241c00;border:0;border-radius:12px;padding:10px 18px;font-weight:800;cursor:pointer}
+  button.ghost{background:transparent;color:var(--ink);border:1px solid #3b3570;border-radius:12px;padding:10px 16px;cursor:pointer}
+  button.pick{background:var(--panel);color:var(--ink);border:1px solid #332e63;border-radius:10px;
+              padding:7px 14px;font:inherit;font-size:13px;cursor:pointer}
+  button.pick.on{border-color:var(--bee);background:#2a2450;font-weight:700}
+  .swatch{display:flex;gap:6px;flex-wrap:wrap}
+  .swatch button{width:30px;height:30px;border-radius:9px;border:2px solid transparent;cursor:pointer}
+  .swatch button.on{border-color:var(--bee)}
+  .chart{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:7px}
+  .chip{background:var(--panel);border:1px solid #332e63;border-radius:11px;padding:5px 3px 3px;text-align:center;cursor:pointer}
+  .chip.on{border-color:var(--bee);background:#2a2450}
+  .chip svg{display:block;width:100%;height:42px;background:#F4F4F4;border-radius:7px}
+  .chip span{font-size:10px;color:var(--muted);font-family:ui-monospace,monospace}
+  .live{font-family:ui-monospace,monospace;font-size:12px;color:#7ce7d0;min-height:18px}
+  .meta{font-size:12.5px;color:var(--muted)}
+  .toggles label{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);
+                 background:var(--panel);border:1px solid #332e63;border-radius:10px;padding:6px 10px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="stageWrap">
+  <div class="stage"><svg id="char" viewBox="0 0 400 480"></svg></div>
+  <div class="caption" id="caption">แตะ <b>พูด</b> เพื่อดูตอนขยับ</div>
+</div>
+
+<div class="panel">
+  <h1>มาสคอตเต็มตัว — ทรงเรียบ ไม่มีเส้นขอบ</h1>
+  <p class="sub">
+    หน้าเล็ก ตาเป็นจุด คิ้วเส้นบาง · ผมยาวเป็นมวลใหญ่คลุมถึงเอว · เสื้อครีม + กระโปรงทรงสอบ ·
+    <b>ไม่มีขา มีแค่แท่งรองเท้า</b> · แขนสั้นปลายมน ไม่มีมือแยก · สีแบนล้วน ไม่มี gradient
+  </p>
+
+  <h2>เปิด/ปิดการเคลื่อนไหว</h2>
+  <div class="row toggles" id="toggles"></div>
+
+  <h2>ท่าแขน</h2>
+  <div class="row" id="posePick"></div>
+
+  <h2>ทรงผม</h2>
+  <div class="row" id="hairPick"></div>
+
+  <h2>สีผม / สีเสื้อ / สีกระโปรง</h2>
+  <div class="row">
+    <div class="swatch" id="hairSw"></div>
+    <div class="swatch" id="topSw"></div>
+    <div class="swatch" id="skirtSw"></div>
+  </div>
+
+  <h2>ลองพูด</h2>
+  <textarea id="text" rows="2">Hi! I'm Mali. Shall we practise ordering coffee together?</textarea>
+  <div class="row">
+    <button class="act" id="speak">▶︎ พูด</button>
+    <button class="ghost" id="loop">↻ วนลูป</button>
+    <button class="ghost" id="stop">■ หยุด</button>
+    <button class="ghost" id="wave">👋 โบกมือ</button>
+    <label class="meta">เสียง <select id="voice" style="width:auto;padding:6px 8px"></select></label>
+  </div>
+  <p class="live" id="live"></p>
+
+  <h2>ชุดปาก 13 แบบ</h2>
+  <div class="chart" id="chart"></div>
+</div>
+
+<script>
+/* ============================================================
+   พาเลต — แบนล้วน จำกัดสี ไม่มีเส้นขอบ
+   ============================================================ */
+let HAIR='#1C1C1C', TOP='#F5E6B8', SKIRT='#1C1C1C';
+const SKIN='#F7D2B0', BLUSH='#F0A98C', DARK='#1C1C1C';
+const WHITE='#FFFFFF', TONGUE='#E8737F', FOLD='#FFFFFF';
+const HAIRS =['#1C1C1C','#5A3A26','#B8863F','#6B4A8C','#2F5D52','#A33B3B'];
+const TOPS  =['#F5E6B8','#DCE8F5','#F3D3DC','#E2EEDC','#FFFFFF','#F0DCC8'];
+const SKIRTS=['#1C1C1C','#3A4A6B','#6B3A4A','#3A5A46','#5A4A6B','#7A5230'];
+
+/* ============================================================
+   ปาก 13 แบบ — เล็กมาก เพราะหน้ากว้างแค่ ~84 หน่วย (กรอบ ±12)
+   ============================================================ */
+const VISEMES={
+  rest:{open:0,   svg:`<path d="M-8 -1 Q0 6 8 -1" fill="none" stroke="${DARK}" stroke-width="3.4" stroke-linecap="round"/>`},
+  MBP:{open:0,    svg:`<rect x="-8" y="-1.8" width="16" height="3.4" rx="1.7" fill="${DARK}"/>`},
+  FV:{open:.12,   svg:`<rect x="-7.5" y="-.6" width="15" height="3" rx="1.5" fill="${DARK}"/><rect x="-5.5" y="-3" width="11" height="2.6" rx="1.1" fill="${WHITE}"/>`},
+  SS:{open:.16,   svg:`<ellipse rx="8" ry="2.6" fill="${DARK}"/><rect x="-5.5" y="-2.1" width="11" height="2.1" rx="1" fill="${WHITE}"/>`},
+  E:{open:.5,     svg:`<ellipse rx="9.5" ry="4.6" fill="${DARK}"/><rect x="-7" y="-3.9" width="14" height="2.4" rx="1.2" fill="${WHITE}"/><ellipse cy="2.6" rx="4.6" ry="1.7" fill="${TONGUE}"/>`},
+  AA:{open:1,     svg:`<ellipse cy="1" rx="8" ry="8" fill="${DARK}"/><rect x="-5.4" y="-6.4" width="10.8" height="2.4" rx="1.2" fill="${WHITE}"/><ellipse cy="5" rx="4.4" ry="2.3" fill="${TONGUE}"/>`},
+  KG:{open:.5,    svg:`<ellipse rx="7.4" ry="5.4" fill="${DARK}"/><rect x="-5" y="-4.5" width="10" height="2.1" rx="1" fill="${WHITE}"/>`},
+  O:{open:.62,    svg:`<ellipse rx="5.4" ry="6.8" fill="${DARK}"/>`},
+  U:{open:.34,    svg:`<ellipse rx="3.6" ry="4.6" fill="${DARK}"/>`},
+  CH:{open:.42,   svg:`<ellipse rx="5.4" ry="5.8" fill="${DARK}"/><ellipse rx="5.4" ry="5.8" fill="none" stroke="${TONGUE}" stroke-width="1.5"/>`},
+  RR:{open:.3,    svg:`<ellipse rx="5.1" ry="4.2" fill="${DARK}"/>`},
+  DDTN:{open:.32, svg:`<ellipse rx="6.1" ry="4.5" fill="${DARK}"/><ellipse cy="-1.6" rx="3.8" ry="1.9" fill="${TONGUE}"/>`},
+  TH:{open:.3,    svg:`<ellipse rx="6.4" ry="3.9" fill="${DARK}"/><rect x="-4.5" y="-3" width="9" height="1.8" rx=".9" fill="${WHITE}"/><ellipse cy="1.9" rx="3.5" ry="2.1" fill="${TONGUE}"/>`},
+};
+
+/* ============================================================
+   ทรงผม — หน้าอยู่ x158..242 y88..196 (เล็ก) ผมเป็นมวลใหญ่กว่าหน้ามาก
+   ============================================================ */
+const HAIRSTYLES={
+  'ยาวตรง':{
+    back:`<path d="M126 170 Q122 62 200 58 Q278 62 274 170 L282 304 Q240 288 200 290 Q160 288 118 304 Z" fill="{H}"/>`,
+    front:`<path d="M132 156 Q128 66 200 62 Q272 66 268 156 Q258 112 214 104 Q166 98 132 156 Z" fill="{H}"/>`},
+  'ผมม้าเต็ม':{
+    back:`<path d="M124 172 Q120 60 200 56 Q280 60 276 172 L286 310 Q240 292 200 294 Q160 292 114 310 Z" fill="{H}"/>`,
+    front:`<path d="M130 150 Q126 64 200 60 Q274 64 270 150 Q266 120 200 116 Q134 120 130 150 Z" fill="{H}"/>`},
+  'บ็อบ':{
+    back:`<path d="M130 168 Q126 64 200 60 Q274 64 270 168 Q276 208 266 228 Q236 214 200 216 Q164 214 134 228 Q124 208 130 168 Z" fill="{H}"/>`,
+    front:`<path d="M134 154 Q130 66 200 62 Q270 66 266 154 Q256 112 212 104 Q168 98 134 154 Z" fill="{H}"/>`},
+  'หางม้า':{
+    back:`<path d="M130 166 Q126 62 200 58 Q274 62 270 166 Q274 196 266 210 Q236 198 200 200 Q164 198 134 210 Q126 196 130 166 Z" fill="{H}"/>
+          <path d="M266 164 Q306 176 312 224 Q318 274 292 300 Q278 268 274 228 Q270 190 266 164 Z" fill="{H}"/>`,
+    front:`<path d="M134 152 Q130 66 200 62 Q270 66 266 152 Q256 112 212 104 Q168 98 134 152 Z" fill="{H}"/>`},
+};
+let hairStyle='ยาวตรง';
+
+/* ============================================================
+   ท่าแขน — แขนเป็นแท่งมนสั้น หมุนรอบหัวไหล่
+   ============================================================ */
+const ARM_POSES={
+  'ปล่อย':   {l:  4, r: -4},
+  'ชี้':     {l: 10, r:-62},
+  'กางสองข้าง':{l:-46, r: 46},
+  'กอดอก':   {l: 62, r:-62},
+};
+let armPose='ปล่อย';
+
+/* ============================================================
+   สร้าง DOM ครั้งเดียว
+   หัว→เสื้อ→กระโปรง→รองเท้า วางซ้อนกันเป็นชั้น ไม่มีคอ
+   ============================================================ */
+document.getElementById('char').innerHTML=`
+  <rect width="400" height="480" fill="#F4F4F4"/>
+
+  <!-- ผมด้านหลัง: มวลใหญ่ที่สุดในภาพ อยู่หลังทุกอย่าง -->
+  <g id="head">
+    <g id="hairBackG"></g>
+  </g>
+
+  <!-- ลำตัว -->
+  <g id="bodyG">
+    <!-- กระโปรงทรงสอบ -->
+    <path id="skirt" d="M150 292 L250 292 L268 392 L132 392 Z" fill="{SK}"/>
+    <!-- เสื้อ: ไหล่มน เอวสอบ -->
+    <path id="top" d="M152 232 Q152 206 200 206 Q248 206 248 232 L256 300 Q200 314 144 300 Z" fill="{T}"/>
+    <!-- รอยพับเสื้อ: เส้นสั้นบาง ๆ -->
+    <g opacity=".55" stroke="${FOLD}" stroke-width="3" stroke-linecap="round">
+      <path d="M182 244 v16"/><path d="M200 240 v20"/><path d="M218 244 v16"/>
+    </g>
+  </g>
+
+  <!-- แขนสั้นปลายมน อยู่หน้าเสื้อ -->
+  <g id="armL"><rect id="armLr" x="132" y="222" width="20" height="66" rx="10" fill="{T}"/></g>
+  <g id="armR"><rect id="armRr" x="248" y="222" width="20" height="66" rx="10" fill="{T}"/></g>
+
+  <!-- รองเท้า: แค่แท่งมน 2 อัน ไม่มีขา -->
+  <g id="feet">
+    <rect x="152" y="398" width="40" height="13" rx="6.5" fill="${DARK}"/>
+    <rect x="208" y="398" width="40" height="13" rx="6.5" fill="${DARK}"/>
+  </g>
+
+  <!-- หน้า + ผมหน้า (อยู่ในกลุ่มหัวเพื่อขยับพร้อมกัน) -->
+  <g id="headFront">
+    <rect id="face" x="158" y="88" width="84" height="112" rx="34" fill="${SKIN}"/>
+    <ellipse cx="170" cy="158" rx="11" ry="6.5" fill="${BLUSH}" opacity=".55"/>
+    <ellipse cx="230" cy="158" rx="11" ry="6.5" fill="${BLUSH}" opacity=".55"/>
+
+    <!-- คิ้วเส้นบาง -->
+    <g id="brows" stroke="${DARK}" stroke-width="3" stroke-linecap="round" fill="none">
+      <path d="M172 124 q7 -4 14 -1"/>
+      <path d="M214 123 q7 -3 14 1"/>
+    </g>
+
+    <!-- ตา: จุดเล็ก มีไฮไลต์ -->
+    <g id="eyes">
+      <ellipse cx="179" cy="142" rx="6.4" ry="8.4" fill="${DARK}"/>
+      <ellipse cx="221" cy="142" rx="6.4" ry="8.4" fill="${DARK}"/>
+      <circle cx="181.5" cy="138" r="2.3" fill="${WHITE}"/>
+      <circle cx="223.5" cy="138" r="2.3" fill="${WHITE}"/>
+    </g>
+
+    <g id="jaw"><g id="mouth"></g></g>
+    <g id="hairFrontG"></g>
+  </g>`;
+
+const $=(id)=>document.getElementById(id);
+const headEl=$('head'), headFrontEl=$('headFront'), bodyEl=$('bodyG'),
+      armLEl=$('armL'), armREl=$('armR'), jawEl=$('jaw'), mouthEl=$('mouth'),
+      eyesEl=$('eyes'), browsEl=$('brows');
+
+function applyHair(){
+  const h=HAIRSTYLES[hairStyle];
+  $('hairBackG').innerHTML  = h.back.replaceAll('{H}',HAIR);
+  $('hairFrontG').innerHTML = h.front.replaceAll('{H}',HAIR);
+}
+function applyCloth(){
+  $('top').setAttribute('fill',TOP);
+  $('armLr').setAttribute('fill',TOP);
+  $('armRr').setAttribute('fill',TOP);
+  $('skirt').setAttribute('fill',SKIRT);
+}
+
+/* ============================================================
+   การเคลื่อนไหว
+   ============================================================ */
+const FX={breathe:true, sway:true, blink:true, arms:true, jaw:true};
+let current='rest', shownOpen=0, speaking=false;
+let blink=0, nextBlink=1.5, browLift=0, waveAmt=0;
+const pose={rot:0,x:0,y:0}, poseTo={rot:0,x:0,y:0};
+let nextPose=1.0;
+const armNow={l:4,r:-4};
+const signed=(a,b)=>(Math.random()<.5?-1:1)*(a+Math.random()*(b-a));
+function pickPose(t){
+  const amp=speaking?1:0.6;
+  poseTo.rot=signed(2.5,7)*amp;
+  poseTo.x  =signed(3,8)*amp;
+  poseTo.y  =signed(1.5,4)*amp;
+  nextPose=t+(speaking?0.6+Math.random()*1.0:1.4+Math.random()*2.0);
+}
+let t0=performance.now(), last=t0;
+
+function setViseme(n){
+  current=VISEMES[n]?n:'rest';
+  mouthEl.innerHTML=VISEMES[current].svg;
+  $('live').textContent=`viseme: ${current}   open: ${VISEMES[current].open.toFixed(2)}`;
+  [...document.querySelectorAll('.chip')].forEach(c=>c.classList.toggle('on',c.dataset.v===current));
+}
+
+function tick(now){
+  requestAnimationFrame(tick);
+  const t=(now-t0)/1000, dt=Math.min(.05,(now-last)/1000); last=now;
+
+  /* หายใจ: ลำตัวยืด-หด รอบชายกระโปรง */
+  const br=FX.breathe?Math.sin(t*1.2):0;
+  bodyEl.setAttribute('transform',`translate(200 392) scale(${1-br*.01} ${1+br*.014}) translate(-200 -392)`);
+
+  /* ท่าทางหัว: ไปหยุดที่ท่า → ค้าง → เปลี่ยน · หมุนรอบฐานหัวที่ซ้อนกับไหล่ */
+  if(FX.sway){
+    if(t>=nextPose) pickPose(t);
+    const k=Math.min(1,dt*4.2);
+    pose.rot+=(poseTo.rot-pose.rot)*k; pose.x+=(poseTo.x-pose.x)*k; pose.y+=(poseTo.y-pose.y)*k;
+  } else { pose.rot=pose.x=pose.y=0 }
+  const headTf=`translate(${pose.x} ${pose.y+br*1.6}) rotate(${pose.rot} 200 215)`;
+  headEl.setAttribute('transform',headTf);
+  headFrontEl.setAttribute('transform',headTf);   // ผมหลังกับหน้าต้องขยับพร้อมกันเป๊ะ
+
+  /* แขน: เข้าหาท่าที่เลือก + แกว่งเบา ๆ + โบกมือ */
+  const tgt=ARM_POSES[armPose];
+  const k2=Math.min(1,dt*5);
+  armNow.l+=(tgt.l-armNow.l)*k2; armNow.r+=(tgt.r-armNow.r)*k2;
+  if(waveAmt>0) waveAmt=Math.max(0,waveAmt-dt*0.9);
+  const sw=FX.arms?Math.sin(t*1.1)*3.5:0;
+  const talk=speaking?Math.sin(t*2.3)*5:0;
+  const wave=waveAmt>0?(-58+Math.sin(t*14)*26)*waveAmt:0;
+  armLEl.setAttribute('transform',`rotate(${armNow.l+sw+talk} 142 230)`);
+  armREl.setAttribute('transform',`rotate(${armNow.r-sw-talk+wave} 258 230)`);
+
+  /* กะพริบตา: ตาเป็นจุดเล็ก → บีบความสูงลงแทนการใช้เปลือกตา */
+  if(FX.blink){
+    if(t>=nextBlink){ blink=1; nextBlink=t+2+Math.random()*3.5 }
+    if(blink>0) blink=Math.max(0,blink-dt*9);
+  } else blink=0;
+  const sq=1-Math.sin(Math.min(1,1-blink)*Math.PI)*0.92;
+  eyesEl.setAttribute('transform',`translate(0 142) scale(1 ${sq}) translate(0 -142)`);
+
+  /* คิ้วยกตอนเน้นเสียง */
+  if(browLift>0) browLift=Math.max(0,browLift-dt*3);
+  browsEl.setAttribute('transform',`translate(0 ${-browLift*4})`);
+
+  /* ขากรรไกร */
+  const to=FX.jaw?VISEMES[current].open:0;
+  shownOpen+=(to-shownOpen)*Math.min(1,dt*16);
+  jawEl.setAttribute('transform',`translate(0 ${shownOpen*3})`);
+  mouthEl.setAttribute('transform',`translate(200 ${172+shownOpen*2})`);
+}
+requestAnimationFrame(tick);
+
+/* ============================================================
+   ตาราง viseme (rule-based)
+   ============================================================ */
+const DIGRAPHS=[['th','TH'],['sh','CH'],['ch','CH'],['ph','FV'],['ng','KG'],['oo','U'],['ou','O'],
+                ['ow','O'],['ee','E'],['ea','E'],['ai','E'],['ay','E'],['oa','O'],['qu','KG']];
+const SINGLE={a:'AA',e:'E',i:'E',y:'E',o:'O',u:'U',w:'U',m:'MBP',b:'MBP',p:'MBP',f:'FV',v:'FV',
+              d:'DDTN',t:'DDTN',n:'DDTN',l:'DDTN',k:'KG',g:'KG',c:'KG',q:'KG',x:'KG',
+              s:'SS',z:'SS',j:'CH',r:'RR',h:'AA'};
+function wordToVisemes(w0){
+  let w=w0.toLowerCase().replace(/[^a-z']/g,'');
+  if(w.length>2&&w.endsWith('e')) w=w.slice(0,-1);
+  const out=[]; let i=0;
+  while(i<w.length){
+    const two=w.slice(i,i+2), dg=DIGRAPHS.find(([d])=>d===two);
+    if(dg){out.push(dg[1]); i+=2; continue}
+    const v=SINGLE[w[i]]; if(v) out.push(v); i++;
+  }
+  const dd=out.filter((v,k)=>v!==out[k-1]);
+  return dd.length?dd:['AA'];
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const mini=(s)=>`<svg viewBox="-14 -11 28 22">${s}</svg>`;
+$('chart').innerHTML=Object.entries(VISEMES)
+  .map(([k,v])=>`<div class="chip" data-v="${k}">${mini(v.svg)}<span>${k}</span></div>`).join('');
+$('chart').addEventListener('click',e=>{const c=e.target.closest('.chip'); if(c) setViseme(c.dataset.v)});
+
+const FXL={breathe:'หายใจ',sway:'โยกหัว',blink:'กะพริบตา',arms:'แกว่งแขน',jaw:'ขากรรไกร'};
+$('toggles').innerHTML=Object.keys(FX).map(k=>`<label><input type="checkbox" data-fx="${k}" checked> ${FXL[k]}</label>`).join('');
+$('toggles').addEventListener('change',e=>{if(e.target.dataset.fx) FX[e.target.dataset.fx]=e.target.checked});
+
+const mkSw=(id,arr,apply)=>{
+  const el=$(id);
+  el.innerHTML=arr.map((c,i)=>`<button style="background:${c}" data-c="${c}" class="${i===0?'on':''}"></button>`).join('');
+  el.addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return;
+    [...el.children].forEach(x=>x.classList.toggle('on',x===b)); apply(b.dataset.c)});
+};
+mkSw('hairSw',HAIRS,c=>{HAIR=c; applyHair()});
+mkSw('topSw',TOPS,c=>{TOP=c; applyCloth()});
+mkSw('skirtSw',SKIRTS,c=>{SKIRT=c; applyCloth()});
+
+const mkPick=(id,keys,get,set)=>{
+  const el=$(id);
+  el.innerHTML=keys.map(k=>`<button class="pick ${k===get()?'on':''}" data-k="${k}">${k}</button>`).join('');
+  el.addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return;
+    [...el.children].forEach(x=>x.classList.toggle('on',x===b)); set(b.dataset.k)});
+};
+mkPick('hairPick',Object.keys(HAIRSTYLES),()=>hairStyle,k=>{hairStyle=k; applyHair()});
+mkPick('posePick',Object.keys(ARM_POSES),()=>armPose,k=>{armPose=k});
+
+applyHair(); applyCloth(); setViseme('rest');
+
+/* ============================================================
+   พูด
+   ============================================================ */
+const synth=speechSynthesis, voiceSel=$('voice');
+function fillVoices(){
+  const vs=synth.getVoices().filter(v=>v.lang.toLowerCase().startsWith('en'));
+  voiceSel.innerHTML=vs.map((v,i)=>`<option value="${i}">${v.name}</option>`).join('');
+  fillVoices.list=vs;
+}
+fillVoices(); synth.onvoiceschanged=fillVoices;
+let timers=[], looping=false;
+const clearT=()=>{timers.forEach(clearTimeout); timers=[]};
+function speak(){
+  clearT(); synth.cancel();
+  const text=$('text').value.trim(); if(!text) return;
+  const u=new SpeechSynthesisUtterance(text);
+  const v=fillVoices.list?.[voiceSel.value]; if(v) u.voice=v;
+  u.lang='en-US'; u.rate=.95;
+  $('caption').innerHTML=`<b>Mali</b> · ${text}`;
+  u.onstart=()=>{speaking=true; nextPose=0};
+  u.onboundary=ev=>{
+    if(ev.name==='sentence') return;
+    const w=(text.slice(ev.charIndex).match(/^[A-Za-z']+/)||[''])[0]; if(!w) return;
+    const seq=wordToVisemes(w), ms=Math.max(140,w.length*78/.95), step=ms/seq.length;
+    seq.forEach((n,i)=>timers.push(setTimeout(()=>setViseme(n), i*step)));
+    timers.push(setTimeout(()=>setViseme('MBP'), ms));
+    if(w.length>=5) browLift=1;
+  };
+  u.onend=()=>{speaking=false; clearT(); setViseme('rest'); if(looping) timers.push(setTimeout(speak,700))};
+  u.onerror=u.onend;
+  synth.speak(u);
+}
+$('speak').onclick=()=>{looping=false; speak()};
+$('loop').onclick=()=>{looping=true; speak()};
+$('stop').onclick=()=>{looping=false; speaking=false; clearT(); synth.cancel(); setViseme('rest')};
+$('wave').onclick=()=>{waveAmt=1};
+</script>
+</body>
+</html>

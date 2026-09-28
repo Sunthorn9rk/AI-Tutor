@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { speak } from '../services/tts'
 import { translateToThai } from '../services/gemini'
+import { tx } from '../services/i18n'
 
 interface Props {
   role: 'ai' | 'user'
@@ -23,7 +24,7 @@ export default function ChatBubble({ role, text, praise }: Props) {
     try {
       setTranslation(await translateToThai(text))
     } catch {
-      setTranslation('(แปลไม่สำเร็จ — เช็ค API key ในหน้าตั้งค่า)')
+      setTranslation(tx('(แปลไม่สำเร็จ — เช็ค API key ในหน้าตั้งค่า)', '(Translation failed — check your API key in Settings)'))
     } finally {
       setTranslating(false)
     }
@@ -51,13 +52,13 @@ export default function ChatBubble({ role, text, praise }: Props) {
         {translation && <div className="mt-1.5 border-t border-bee-400/40 pt-1.5 text-sm text-navy-700">{translation}</div>}
       </div>
       <div className="mt-1.5 flex gap-1.5">
-        <BubbleBtn label="ฟังซ้ำ" onClick={() => speak(text, { rate: 'natural' })}>
+        <BubbleBtn label={tx('ฟังซ้ำ', 'Replay')} onClick={() => speak(text, { rate: 'natural' })}>
           🔊
         </BubbleBtn>
-        <BubbleBtn label="ฟังช้า" onClick={() => speak(text, { rateValue: 0.55 })}>
+        <BubbleBtn label={tx('ฟังช้า', 'Play slowly')} onClick={() => speak(text, { rateValue: 0.55 })}>
           🐢
         </BubbleBtn>
-        <BubbleBtn label="แปลไทย" onClick={doTranslate}>
+        <BubbleBtn label={tx('แปลไทย', 'Translate to Thai')} onClick={doTranslate}>
           {translating ? '…' : '🇹🇭'}
         </BubbleBtn>
       </div>

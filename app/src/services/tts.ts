@@ -8,6 +8,7 @@
 import { getSettings, type VoiceRate } from './store'
 import { speakGemini, stopGeminiSpeaking, prefetchGeminiTTS } from './gemini-tts'
 import { speakLocal, stopLocalSpeaking, prefetchLocalTTS } from './local-tts'
+import { currentVoice } from './speaker'
 
 const RATE_PRESETS: Record<VoiceRate, number> = {
   words: 0.6, // เน้นทีละคำ ช้า
@@ -15,7 +16,12 @@ const RATE_PRESETS: Record<VoiceRate, number> = {
   natural: 1.0, // ความเร็วธรรมชาติ
 }
 
-let cachedVoice: SpeechSynthesisVoice | null = null
+// จำเสียงที่เลือกได้แล้ว แยกตามเพศ/ชื่อที่ตั้งเอง — getVoices() ช้าและบางทีคืนลำดับไม่เหมือนเดิม
+const voiceCache = new Map<string, SpeechSynthesisVoice>()
+
+// ชื่อเสียงในเครื่องที่รู้เพศแน่นอน (macOS/iOS/Chrome/Windows) — ใช้เลือกเสียงให้เข้ากับตัวละคร
+const FEMALE = ['samantha', 'ava', 'allison', 'susan', 'zoe', 'nicky', 'joelle', 'karen', 'moira', 'tessa', 'victoria', 'fiona', 'serena', 'kate', 'google us english', 'google uk english female', 'microsoft aria', 'microsoft jenny', 'microsoft zira']
+const MALE = ['alex', 'daniel', 'aaron', 'arthur', 'fred', 'tom', 'oliver', 'rishi', 'reed', 'eddy', 'evan', 'nathan', 'gordon', 'lee', 'google uk english male', 'microsoft guy', 'microsoft david', 'microsoft mark']
 
 /** รายชื่อเสียงอังกฤษทั้งหมดในเครื่อง (ให้หน้า Settings ทำ dropdown) */
 export function listEnglishVoices(): SpeechSynthesisVoice[] {
@@ -25,47 +31,55 @@ export function listEnglishVoices(): SpeechSynthesisVoice[] {
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
-/** เลือกเสียงในเครื่อง: ใช้ตัวที่ผู้ใช้เลือกก่อน ไม่งั้นเลือกเสียง enhanced/premium ให้ */
+/** เลือกเสียงในเครื่อง: ถ้าเปิดเสียงตามตัวละคร เลือกตามเพศของผู้พูด ·
+ *  ไม่งั้นใช้ตัวที่ผู้ใช้เลือกเอง หรือเลือกเสียง enhanced/premium ให้ */
 export function pickVoice(): SpeechSynthesisVoice | null {
-  const wanted = getSettings().deviceVoice
-  if (cachedVoice && (!wanted || cachedVoice.name === wanted)) return cachedVoice
+  const { gender } = currentVoice()
+  const wanted = gender ? '' : getSettings().deviceVoice
+  const key = gender ? `g:${gender}` : `m:${wanted}`
+  const cached = voiceCache.get(key)
+  if (cached) return cached
 
   const voices = window.speechSynthesis?.getVoices() ?? []
   if (!voices.length) return null
+  const remember = (v: SpeechSynthesisVoice) => (voiceCache.set(key, v), v)
 
   if (wanted) {
     const hit = voices.find((v) => v.name === wanted)
-    if (hit) {
-      cachedVoice = hit
-      return hit
+    if (hit) return remember(hit)
+  }
+
+  const en = voices.filter((v) => v.lang.toLowerCase().startsWith('en'))
+  const us = en.filter((v) => v.lang.startsWith('en-US') || v.lang.startsWith('en_US'))
+  if (!en.length) return null
+
+  if (gender) {
+    // US ก่อน แล้วค่อย UK/AU — ถ้าเครื่องไม่มีเสียงเพศนั้นเลย ตกไปใช้เสียงปกติ (pitch ยังช่วยแยกได้)
+    for (const pool of [us, en]) {
+      for (const name of gender === 'm' ? MALE : FEMALE) {
+        const hit = pool.find((v) => v.name.toLowerCase().includes(name))
+        if (hit) return remember(hit)
+      }
     }
   }
 
-  const en = voices.filter((v) => v.lang.startsWith('en-US') || v.lang.startsWith('en_US'))
-  const pool = en.length ? en : voices.filter((v) => v.lang.startsWith('en'))
-  if (!pool.length) return null
-
-  const preferred = ['samantha', 'ava', 'allison', 'google us english', 'zoe', 'nicky', 'joelle']
-  for (const name of preferred) {
+  const pool = us.length ? us : en
+  for (const name of ['samantha', 'ava', 'allison', 'google us english', 'zoe', 'nicky', 'joelle']) {
     const hit = pool.find((v) => v.name.toLowerCase().includes(name))
-    if (hit) {
-      cachedVoice = hit
-      return hit
-    }
+    if (hit) return remember(hit)
   }
-  cachedVoice = pool.find((v) => v.default) ?? pool[0]
-  return cachedVoice
+  return remember(pool.find((v) => v.default) ?? pool[0])
 }
 
 /** เรียกเมื่อผู้ใช้เปลี่ยนเสียงในหน้า Settings เพื่อให้เลือกใหม่ */
 export function resetVoiceCache() {
-  cachedVoice = null
+  voiceCache.clear()
 }
 
 // voice list โหลด async ในบาง browser
 if (typeof window !== 'undefined' && window.speechSynthesis) {
   window.speechSynthesis.onvoiceschanged = () => {
-    cachedVoice = null
+    voiceCache.clear()
     pickVoice()
   }
 }
@@ -170,7 +184,9 @@ export async function speak(text: string, opts: SpeakOptions = {}): Promise<void
     return
   }
   const settings = getSettings()
-  const rate = opts.rateValue ?? RATE_PRESETS[opts.rate ?? 'natural']
+  const profile = currentVoice()
+  // ความเร็วประจำตัวละคร (เช่น คุณยายพูดช้า) คูณกับความเร็วที่ผู้ใช้เลือก
+  const rate = (opts.rateValue ?? RATE_PRESETS[opts.rate ?? 'natural']) * profile.rate
 
   // เสียง AI (cloud/local) คุมความเร็วด้วย playbackRate (map ให้แคบกว่า กันเสียงเพี้ยน)
   const playbackRate = Math.min(1, Math.max(0.75, 0.6 + 0.4 * rate))
@@ -213,7 +229,7 @@ export async function speak(text: string, opts: SpeakOptions = {}): Promise<void
     const voice = pickVoice()
     if (voice) u.voice = voice
     u.rate = rate
-    u.pitch = 1.05
+    u.pitch = profile.pitch
 
     let settled = false
     const finish = () => {

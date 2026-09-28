@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { findLesson } from '../content/course'
 import { getSettings, addWords } from '../services/store'
 import { speak, stopSpeaking, prefetchTTS } from '../services/tts'
+import { setSpeaker } from '../services/speaker'
+import { tx } from '../services/i18n'
 import { listen, type ListenController } from '../services/stt'
 import { matchAnswer, wordCount, diffWords, type WordDiff } from '../services/matcher'
 import { getThaiReading } from '../services/gemini'
@@ -68,6 +70,14 @@ export default function LessonPlayer() {
   const lesson = found?.lesson
   const step = lesson?.steps[stepIndex]
   const total = lesson?.steps.length ?? 0
+
+  // ผู้พูดในบทเรียน = tutor ของ module นี้ → เสียงตรงกับตัวละครบนจอ
+  // (ต้องประกาศก่อน effect prefetch ด้านล่าง เพราะ effect รันตามลำดับ และ prefetch ผูกเสียงไว้ตอนเข้าคิว)
+  const moduleTutor = found?.module.tutorId ?? null
+  useEffect(() => {
+    setSpeaker(moduleTutor)
+    return () => setSpeaker(null)
+  }, [moduleTutor])
 
   // ทยอยโหลด/generate เสียง AI ของทุก step ล่วงหน้า ระหว่างที่ฝึกอยู่
   useEffect(() => {
@@ -269,9 +279,9 @@ export default function LessonPlayer() {
   if (!found || !step) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-3">
-        <div>ไม่พบบทเรียนนี้</div>
+        <div>{tx('ไม่พบบทเรียนนี้', 'Lesson not found')}</div>
         <button type="button" onClick={() => nav('/')} className="rounded-xl bg-bee-400 px-4 py-2 font-bold">
-          กลับหน้าหลัก
+          {tx('กลับหน้าหลัก', 'Back to home')}
         </button>
       </div>
     )
@@ -283,7 +293,7 @@ export default function LessonPlayer() {
     <div className="mx-auto flex min-h-dvh max-w-md flex-col bg-navy-900">
       {/* top bar */}
       <div className="flex items-center gap-3 px-4 pt-[calc(env(safe-area-inset-top)+10px)] pb-2">
-        <button type="button" onClick={() => nav('/')} aria-label="ปิดบทเรียน" className="text-xl text-white/70">
+        <button type="button" onClick={() => nav('/')} aria-label={tx('ปิดบทเรียน', 'Close lesson')} className="text-xl text-white/70">
           ✕
         </button>
         <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-bold text-bee-300">⚡ {words}</span>

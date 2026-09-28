@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { completeLesson, recordStudyDay, getProgress } from '../services/store'
+import { tx } from '../services/i18n'
 
 interface CompleteState {
   lessonId?: string
@@ -31,16 +32,16 @@ export default function LessonComplete() {
       <h1 className="mt-5 text-2xl font-extrabold text-white">
         {state.sceneId ? 'Scene completed!' : 'Lesson complete!'}
       </h1>
-      <p className="mt-1 text-sm text-gray-300">การพูดออกเสียงคือทางลัดสู่ความคล่อง 🎉</p>
+      <p className="mt-1 text-sm text-gray-300">{tx('การพูดออกเสียงคือทางลัดสู่ความคล่อง', 'Speaking out loud is the shortcut to fluency')} 🎉</p>
 
       <div className="mt-8 grid w-full grid-cols-3 gap-3">
-        <Stat icon="🧩" value={`${state.steps}`} label="แบบฝึก" />
-        <Stat icon="📚" value={`+${state.words}`} label="คำที่พูด" />
-        <Stat icon="⏱️" value={mins ? `${mins}:${`${secs}`.padStart(2, '0')}` : `${secs}s`} label="เวลา" />
+        <Stat icon="🧩" value={`${state.steps}`} label={tx('แบบฝึก', 'Exercises')} />
+        <Stat icon="📚" value={`+${state.words}`} label={tx('คำที่พูด', 'Words')} />
+        <Stat icon="⏱️" value={mins ? `${mins}:${`${secs}`.padStart(2, '0')}` : `${secs}s`} label={tx('เวลา', 'Time')} />
       </div>
 
       <div className="mt-6 flex items-center gap-2 rounded-full bg-orange-500/20 px-4 py-2 text-sm font-bold text-orange-300">
-        ⚡ streak {progress.streak} วันติดกัน!
+        ⚡ {tx(`streak ${progress.streak} วันติดกัน!`, `${progress.streak}-day streak!`)}
       </div>
 
       <button
@@ -48,7 +49,7 @@ export default function LessonComplete() {
         onClick={() => nav('/', { replace: true })}
         className="mt-10 w-full rounded-2xl bg-bee-400 py-4 text-lg font-bold text-navy-900 shadow-md transition active:scale-[0.98]"
       >
-        เรียนต่อ
+        {tx('เรียนต่อ', 'Continue')}
       </button>
     </div>
   )

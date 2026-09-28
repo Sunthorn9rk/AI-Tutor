@@ -7,6 +7,7 @@
 //   แล้วเข้าคิวโหลดเงียบ ๆ ไว้ให้รอบหน้า
 
 import { getSettings } from './store'
+import { currentVoice } from './speaker'
 import { ttsCacheGet as cacheGet, ttsCachePut as cachePut } from './tts-cache'
 import { getAudioContext, getSpeechOutput } from './audio-bus'
 
@@ -16,14 +17,14 @@ const MIN_INTERVAL_MS = 21000 // free tier ~3 req/นาที → เว้น 
 const QUOTA_BLOCK_MS = 10 * 60_000 // โดน 429 → พัก 10 นาทีค่อยลองใหม่
 
 /** เสียงที่คัดมาให้เลือก (จาก ~30 เสียงของ Gemini) */
-export const GEMINI_VOICES: { id: string; label: string }[] = [
-  { id: 'Kore', label: 'Kore — หญิง มั่นใจ ชัดเจน' },
-  { id: 'Aoede', label: 'Aoede — หญิง สดใส เป็นธรรมชาติ' },
-  { id: 'Leda', label: 'Leda — หญิง อ่อนเยาว์' },
-  { id: 'Zephyr', label: 'Zephyr — หญิง สดชื่น กระตือรือร้น' },
-  { id: 'Puck', label: 'Puck — ชาย ร่าเริง' },
-  { id: 'Charon', label: 'Charon — ชาย ทุ้ม ให้ความรู้' },
-  { id: 'Fenrir', label: 'Fenrir — ชาย หนักแน่น' },
+export const GEMINI_VOICES: { id: string; label: string; labelEn: string }[] = [
+  { id: 'Kore', label: 'Kore — หญิง มั่นใจ ชัดเจน', labelEn: 'Kore — female, confident, clear' },
+  { id: 'Aoede', label: 'Aoede — หญิง สดใส เป็นธรรมชาติ', labelEn: 'Aoede — female, bright, natural' },
+  { id: 'Leda', label: 'Leda — หญิง อ่อนเยาว์', labelEn: 'Leda — female, youthful' },
+  { id: 'Zephyr', label: 'Zephyr — หญิง สดชื่น กระตือรือร้น', labelEn: 'Zephyr — female, fresh, energetic' },
+  { id: 'Puck', label: 'Puck — ชาย ร่าเริง', labelEn: 'Puck — male, cheerful' },
+  { id: 'Charon', label: 'Charon — ชาย ทุ้ม ให้ความรู้', labelEn: 'Charon — male, deep, informative' },
+  { id: 'Fenrir', label: 'Fenrir — ชาย หนักแน่น', labelEn: 'Fenrir — male, firm' },
 ]
 
 let currentSource: AudioBufferSourceNode | null = null
@@ -105,7 +106,8 @@ function fetchAndCache(text: string, voice: string, key: string, cacheKey: strin
 
 // ---------- prefetch queue (โหลดเสียงล่วงหน้าแบบเว้นจังหวะตามลิมิต) ----------
 
-const queue: string[] = []
+// เก็บเสียงไว้กับประโยคตั้งแต่ตอนเข้าคิว — ถ้าอ่านตอน pump คิวที่ค้างจะได้เสียงของผู้พูดคนถัดไป
+const queue: { text: string; voice: string }[] = []
 let pumping = false
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -114,9 +116,10 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 export function prefetchGeminiTTS(texts: string[]) {
   const { geminiKey, ttsEngine } = getSettings()
   if (!geminiKey || ttsEngine !== 'gemini') return
+  const voice = currentVoice().gemini
   for (const t of texts) {
     const text = t.trim()
-    if (text && !queue.includes(text)) queue.push(text)
+    if (text && !queue.some((q) => q.text === text && q.voice === voice)) queue.push({ text, voice })
   }
   void pump()
 }
@@ -126,11 +129,11 @@ async function pump() {
   pumping = true
   try {
     while (queue.length) {
-      const { geminiKey, geminiVoice, ttsEngine } = getSettings()
+      const { geminiKey, ttsEngine } = getSettings()
       if (!geminiKey || ttsEngine !== 'gemini') break
       if (Date.now() < blockedUntil) break // โควตาหมดชั่วคราว — เลิกรอบนี้
 
-      const text = queue[0]
+      const { text, voice: geminiVoice } = queue[0]
       const cacheKey = `${geminiVoice}|${text}`
       if (await cacheGet(cacheKey)) {
         queue.shift()
@@ -171,7 +174,8 @@ export function stopGeminiSpeaking() {
 /** พูดด้วยเสียง Gemini — โยน GeminiTTSError ถ้าใช้ไม่ได้ตอนนี้ (ให้ผู้เรียก fallback)
  *  ประโยคที่ยังไม่ cache และติดลิมิต จะถูกเข้าคิวโหลดเงียบ ๆ ให้ใช้ครั้งหน้า */
 export async function speakGemini(text: string, playbackRate = 1, onStart?: () => void): Promise<void> {
-  const { geminiKey, geminiVoice } = getSettings()
+  const { geminiKey } = getSettings()
+  const geminiVoice = currentVoice().gemini
   if (!geminiKey) throw new GeminiTTSError('no-key', 'no-key')
 
   const cacheKey = `${geminiVoice}|${text}`

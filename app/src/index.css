@@ -1,9 +1,37 @@
 @import 'tailwindcss';
 
+/* ============================================================================
+   Design tokens — Tailwind v4 `@theme` สร้าง utility ให้อัตโนมัติ
+   (`--color-aqua-500` → `bg-aqua-500` · `--radius-card` → `rounded-card`)
+
+   กฎ: ห้ามใช้สี Tailwind ดิบ (gray-400, blue-500, red-500) ในหน้าจอ
+        ให้ใช้ token ในไฟล์นี้เท่านั้น จะได้เปลี่ยนธีมที่เดียวจบ
+   ============================================================================ */
 @theme {
   --font-sans: 'Noto Sans Thai', 'Nunito', ui-sans-serif, system-ui, sans-serif;
   --font-en: 'Nunito', 'Noto Sans Thai', ui-sans-serif, system-ui, sans-serif;
 
+  /* ---- ฟ้า/น้ำเงิน = สีหลัก ใช้กับปุ่มหลักและสิ่งที่ต้องกด ---- */
+  --color-aqua-50: #eefaff;
+  --color-aqua-100: #d8f2ff;
+  --color-aqua-200: #b0e6ff;
+  --color-aqua-300: #7ad6fb;
+  --color-aqua-400: #4fc0f2;
+  --color-aqua-500: #35a9e8;
+  --color-aqua-600: #1f87c2;
+  --color-aqua-700: #1a6c9c;
+
+  /* ---- ส้ม = สีรอง ใช้กับ CTA อุ่น ๆ / streak / ไฮไลต์ ---- */
+  --color-tang-50: #fff6ec;
+  --color-tang-100: #ffe9d2;
+  --color-tang-200: #ffd2a3;
+  --color-tang-300: #ffb564;
+  --color-tang-400: #ff9d33;
+  --color-tang-500: #ff8a00;
+  --color-tang-600: #e06f00;
+  --color-tang-700: #b85700;
+
+  /* ---- เหลือง (ของเดิม อย่าแก้ค่า ใช้อยู่ 100+ ที่) ---- */
   --color-bee-50: #fffbf2;
   --color-bee-100: #fff3d6;
   --color-bee-200: #ffe7a8;
@@ -12,18 +40,62 @@
   --color-bee-500: #f5b301;
   --color-bee-600: #d99a00;
 
+  /* ---- ม่วง = หมวดคำศัพท์ / achievement ---- */
+  --color-grape-50: #f6f0ff;
+  --color-grape-100: #ece0ff;
+  --color-grape-200: #dcc6ff;
+  --color-grape-300: #c5a1f7;
+  --color-grape-400: #b07eef;
+  --color-grape-500: #9b5de5;
+  --color-grape-600: #7f42c7;
+  --color-grape-700: #67349f;
+
+  /* ---- เขียว = สำเร็จ/ถูกต้อง (500,600 ของเดิม อย่าแก้) ---- */
+  --color-leaf-50: #f0fde8;
+  --color-leaf-100: #ddf8cb;
+  --color-leaf-200: #bff09c;
+  --color-leaf-300: #9ce668;
+  --color-leaf-400: #7ad935;
+  --color-leaf-500: #58cc02;
+  --color-leaf-600: #45a302;
+
+  /* ---- แดง = ผิด/อันตราย ---- */
+  --color-berry-100: #ffe4e4;
+  --color-berry-400: #ff6b6b;
+  --color-berry-500: #ee4f4f;
+  --color-berry-600: #cc3b3b;
+
+  /* ---- navy = ตัวหนังสือทั้งหมด (700-900 ของเดิม)
+         200-500 เพิ่มใหม่ไว้แทน text-gray-* ที่รั่วอยู่ 55 ที่ ---- */
+  --color-navy-200: #aeb6c6;
+  --color-navy-300: #8a94a8;
+  --color-navy-400: #6b768e;
+  --color-navy-500: #4f5a72;
+  --color-navy-600: #3a4560;
   --color-navy-700: #2b3a5c;
   --color-navy-800: #1e2a45;
   --color-navy-900: #14213d;
 
-  --color-leaf-500: #58cc02;
-  --color-leaf-600: #45a302;
+  /* ---- พื้นหลัง ---- */
+  --color-canvas: #f7f2ed;
+  --color-surface: #ffffff;
+
+  /* ---- มุมโค้ง: reference ใช้โค้งใหญ่ การ์ด 20-28 ปุ่ม 14-20 ---- */
+  --radius-card: 1.5rem; /* 24px */
+  --radius-tile: 1.25rem; /* 20px */
+  --radius-btn: 1rem; /* 16px */
+  --radius-input: 0.875rem; /* 14px */
+
+  /* ---- เงา: นุ่ม ไม่ดำจัด ---- */
+  --shadow-card: 0 2px 10px -2px rgb(20 33 61 / 0.08), 0 1px 3px rgb(20 33 61 / 0.05);
+  --shadow-lift: 0 12px 28px -10px rgb(20 33 61 / 0.22);
+  --shadow-pop: 0 6px 18px -6px rgb(20 33 61 / 0.18);
 }
 
 html,
 body {
   height: 100%;
-  background: var(--color-bee-50);
+  background: var(--color-canvas);
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -32,6 +104,9 @@ body {
   min-height: 100dvh;
 }
 
+/* ============================================================================
+   Animations (ของเดิม — LessonPlayer/MicButton/CartoonAvatar ใช้อยู่ อย่าลบ)
+   ============================================================================ */
 @keyframes talk-pulse {
   0%,
   100% {
@@ -118,4 +193,69 @@ body {
 
 .slide-up {
   animation: slide-up 0.25s ease-out both;
+}
+
+/* ============================================================================
+   Animations ใหม่สำหรับ UI ที่ออกแบบรอบนี้
+   ============================================================================ */
+
+/* การ์ดไล่กันโผล่ — ใส่ style="animation-delay:..." รายใบ */
+@keyframes rise-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise-in {
+  animation: rise-in 0.3s ease-out both;
+}
+
+/* เหรียญ/ถ้วยตอนปลดล็อก */
+@keyframes trophy-pop {
+  0% {
+    transform: scale(0.5) rotate(-12deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12) rotate(4deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+.trophy-pop {
+  animation: trophy-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* หลอดความคืบหน้าวิ่งจาก 0 ไปค่าจริง (ตั้ง --to ใน style) */
+@keyframes bar-fill {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: var(--to);
+  }
+}
+
+.bar-fill {
+  animation: bar-fill 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in,
+  .trophy-pop,
+  .bar-fill,
+  .pop-in,
+  .slide-up {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
 }

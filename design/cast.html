@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Tutor — ตัวละครทั้งหมด</title>
+<style>
+  :root{--canvas:#f7f2ed;--ink:#14213d;--muted:#6b768e;--tang:#ff8a00}
+  *{box-sizing:border-box}
+  body{margin:0;padding:28px 24px 60px;background:var(--canvas);color:var(--ink);
+       font:14px/1.55 system-ui,-apple-system,"Noto Sans Thai",sans-serif}
+  h1{font-size:24px;margin:0 0 4px;font-weight:800}
+  .sub{color:var(--muted);margin:0 0 22px;max-width:760px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;max-width:1280px}
+  .card{background:#fff;border-radius:24px;padding:10px 10px 14px;box-shadow:0 2px 10px -2px rgb(20 33 61/.08);
+        cursor:pointer;transition:transform .12s, box-shadow .12s;position:relative}
+  .card:hover{transform:translateY(-3px);box-shadow:0 12px 28px -10px rgb(20 33 61/.22)}
+  .card.talk{outline:3px solid var(--tang)}
+  .stage{border-radius:18px;overflow:hidden;aspect-ratio:5/6}
+  .stage svg{width:100%;height:100%;display:block}
+  .name{font-weight:800;font-size:17px;margin:10px 4px 0}
+  .meta{font-size:12px;color:var(--muted);margin:0 4px}
+  .tags{display:flex;gap:5px;flex-wrap:wrap;margin:8px 4px 0}
+  .tag{font-size:11px;font-weight:700;border-radius:99px;padding:3px 9px}
+  .hint{position:absolute;right:16px;top:16px;background:#fff;border-radius:99px;padding:3px 9px;
+        font-size:11px;font-weight:800;color:var(--tang);opacity:0;transition:opacity .15s}
+  .card:hover .hint{opacity:1}
+</style>
+</head>
+<body>
+<h1>ตัวละครทั้งหมด — ร่างแรก</h1>
+<p class="sub">
+  ทุกตัวประกอบจากชิ้นส่วนชุดเดียวกัน (รูปหน้า · ทรงผม · ชุด · สีผิว · ของตกแต่งตามวัย) ในภาษาภาพเดียวกับ tutor ที่เลือกไว้
+  · ทุกตัวหายใจ กะพริบตา ขยับหัวเองอยู่แล้ว · <b>คลิกการ์ดเพื่อให้พูดแนะนำตัว</b>
+</p>
+<div class="grid" id="grid"></div>
+
+<script>
+/* ===================== ชิ้นส่วน ===================== */
+const SKINS = {            // [ผิว, เงา/จมูก, แก้ม]
+  fair:  ['#FBDCC4','#EDB999','#F4A594'],
+  light: ['#F6C9A8','#E8AC86','#EFA184'],
+  tan:   ['#E3AE86','#CD9068','#E08A70'],
+  brown: ['#C68A5E','#A96F46','#C9735A'],
+  deep:  ['#8C5A3B','#6F4329','#A5543F'],
+};
+const DARK='#2B2036', WHITE='#FFF8EE', TONGUE='#E86A78';
+
+const FACES = {
+  oval:  'M124 202 Q124 88 200 88 Q276 88 276 202 Q276 262 258 286 Q234 312 200 314 Q166 312 142 286 Q124 262 124 202 Z',
+  square:'M122 196 Q122 90 200 90 Q278 90 278 196 L278 256 Q276 298 242 310 Q200 318 158 310 Q124 298 122 256 Z',
+  long:  'M130 200 Q130 84 200 84 Q270 84 270 200 Q270 272 252 298 Q230 324 200 326 Q170 324 148 298 Q130 272 130 200 Z',
+  round: 'M116 214 Q116 100 200 100 Q284 100 284 214 Q284 272 258 296 Q232 318 200 318 Q168 318 142 296 Q116 272 116 214 Z',
+};
+
+// ทรงผม: back = ข้างหลังหน้า, front = ทับหน้า · {H}=สีผม {A}=สีของตกแต่ง
+const HAIR = {
+  long:{back:`<path d="M104 190 Q100 74 200 70 Q300 74 296 190 L300 334 Q250 308 200 310 Q150 308 100 334 Z" fill="{H}"/>`,
+        front:`<path d="M112 176 Q108 78 200 74 Q292 78 288 176 Q278 128 228 120 Q156 110 112 176 Z" fill="{H}"/>
+               <path d="M112 170 Q100 250 108 322 Q82 310 78 246 Q76 190 112 170 Z" fill="{H}"/>
+               <path d="M288 170 Q300 250 292 322 Q318 310 322 246 Q324 190 288 170 Z" fill="{H}"/>`},
+  bob:{back:`<path d="M106 196 Q102 74 200 70 Q298 74 294 196 Q300 258 288 284 Q248 266 200 268 Q152 266 112 284 Q100 258 106 196 Z" fill="{H}"/>`,
+       front:`<path d="M112 182 Q108 76 200 72 Q292 76 288 182 Q280 136 232 126 Q158 116 112 182 Z" fill="{H}"/>
+              <path d="M112 176 Q104 228 114 278 Q94 270 88 234 Q84 198 112 176 Z" fill="{H}"/>
+              <path d="M288 176 Q296 228 286 278 Q306 270 312 234 Q316 198 288 176 Z" fill="{H}"/>`},
+  bangs:{back:`<path d="M106 196 Q102 74 200 70 Q298 74 294 196 Q300 258 288 284 Q248 266 200 268 Q152 266 112 284 Q100 258 106 196 Z" fill="{H}"/>`,
+         front:`<path d="M114 172 Q110 76 200 72 Q290 76 286 172 Q286 146 200 142 Q114 146 114 172 Z" fill="{H}"/>
+                <path d="M112 176 Q104 228 114 278 Q94 270 88 234 Q84 198 112 176 Z" fill="{H}"/>
+                <path d="M288 176 Q296 228 286 278 Q306 270 312 234 Q316 198 288 176 Z" fill="{H}"/>`},
+  curly:{back:`<g fill="{H}"><circle cx="200" cy="120" r="84"/><circle cx="126" cy="170" r="54"/><circle cx="274" cy="170" r="54"/>
+               <circle cx="148" cy="100" r="50"/><circle cx="252" cy="100" r="50"/><circle cx="118" cy="232" r="40"/><circle cx="282" cy="232" r="40"/></g>`,
+         front:`<g fill="{H}"><circle cx="160" cy="124" r="40"/><circle cx="240" cy="124" r="40"/><circle cx="200" cy="106" r="44"/></g>`},
+  afro:{back:`<g fill="{H}"><circle cx="200" cy="130" r="112"/></g>`,
+        front:`<path d="M126 168 Q124 96 200 94 Q276 96 274 168 Q262 132 200 128 Q138 132 126 168 Z" fill="{H}"/>`},
+  bun:{back:`<circle cx="200" cy="60" r="36" fill="{H}"/>
+             <path d="M118 184 Q114 80 200 76 Q286 80 282 184 Q286 214 278 228 Q244 214 200 216 Q156 214 122 228 Q114 214 118 184 Z" fill="{H}"/>`,
+       front:`<path d="M120 174 Q116 84 200 80 Q284 84 280 174 Q270 134 226 126 Q162 116 120 174 Z" fill="{H}"/>`},
+  ponytail:{back:`<path d="M112 186 Q108 78 200 74 Q292 78 288 186 Q292 236 286 260 Q244 244 200 246 Q156 244 114 260 Q108 236 112 186 Z" fill="{H}"/>
+                  <path d="M284 188 Q332 198 340 252 Q346 306 316 340 Q300 306 296 260 Q292 218 284 188 Z" fill="{H}"/>`,
+            front:`<path d="M116 178 Q112 78 200 74 Q288 78 284 178 Q274 132 226 124 Q160 114 116 178 Z" fill="{H}"/>`},
+  pigtails:{back:`<circle cx="98" cy="196" r="36" fill="{H}"/><circle cx="302" cy="196" r="36" fill="{H}"/>
+                  <circle cx="126" cy="172" r="9" fill="{A}"/><circle cx="274" cy="172" r="9" fill="{A}"/>
+                  <path d="M116 190 Q112 92 200 88 Q288 92 284 190 Q286 210 278 222 Q244 210 200 212 Q156 210 122 222 Q114 210 116 190 Z" fill="{H}"/>`,
+            front:`<path d="M116 180 Q112 92 200 88 Q288 92 284 180 Q284 154 200 150 Q116 154 116 180 Z" fill="{H}"/>`},
+  short:{back:`<path d="M118 182 Q114 78 200 74 Q286 78 282 182 Q286 212 278 226 Q244 212 200 214 Q156 212 122 226 Q114 212 118 182 Z" fill="{H}"/>`,
+         front:`<path d="M118 176 Q114 80 200 76 Q286 80 282 176 Q272 136 228 128 Q162 118 118 176 Z" fill="{H}"/>`},
+  sidepart:{back:`<path d="M120 190 Q116 80 200 76 Q284 80 280 190 L276 212 L270 176 L130 176 L124 212 Z" fill="{H}"/>`,
+            front:`<path d="M120 176 Q118 82 200 78 Q282 82 280 176 Q270 120 178 118 Q146 122 120 176 Z" fill="{H}"/>`},
+  spiky:{back:`<path d="M120 190 Q116 90 200 86 Q284 90 280 190 L276 214 L130 214 Z" fill="{H}"/>`,
+         front:`<path d="M116 176 Q114 104 142 84 L150 58 L172 78 L190 50 L208 76 L230 52 L240 80 L266 64 Q288 104 284 176 Q272 132 200 126 Q128 132 116 176 Z" fill="{H}"/>`},
+  buzz:{back:``,
+        front:`<path d="M126 164 Q122 90 200 86 Q278 90 274 164 Q262 118 200 112 Q138 118 126 164 Z" fill="{H}"/>`},
+  balding:{back:``,
+           front:`<path d="M124 214 Q116 160 136 128 L148 132 Q136 170 140 214 Z" fill="{H}"/>
+                  <path d="M276 214 Q284 160 264 128 L252 132 Q264 170 260 214 Z" fill="{H}"/>`},
+  hijab:{back:`<path d="M98 210 Q94 66 200 62 Q306 66 302 210 L316 350 Q200 380 84 350 Z" fill="{A}"/>`,
+         front:`<path d="M122 176 Q118 90 200 86 Q282 90 278 176 Q268 120 200 112 Q132 120 122 176 Z" fill="{A}"/>
+                <path d="M124 176 Q122 250 150 296 Q128 300 116 270 Q106 220 124 176 Z" fill="{A}"/>
+                <path d="M276 176 Q278 250 250 296 Q272 300 284 270 Q294 220 276 176 Z" fill="{A}"/>
+                <path d="M146 296 Q200 330 254 296 L262 340 Q200 366 138 340 Z" fill="{A}"/>
+                <path d="M146 296 Q200 330 254 296" fill="none" stroke="#000" stroke-opacity=".12" stroke-width="4"/>`},
+  cap:{back:`<path d="M128 150 L140 150 L138 206 Q130 196 128 150 Z" fill="{H}"/><path d="M272 150 L260 150 L262 206 Q270 196 272 150 Z" fill="{H}"/>`,
+       front:`<path d="M116 150 Q116 70 200 68 Q284 70 284 150 Z" fill="{A}"/>
+              <path d="M116 150 Q200 136 304 146 Q316 150 312 160 Q200 148 110 162 Q106 154 116 150 Z" fill="{A}"/>
+              <path d="M116 150 Q200 136 304 146 Q316 150 312 160 Q200 148 110 162 Q106 154 116 150 Z" fill="#000" opacity=".15"/>
+              <circle cx="200" cy="72" r="6" fill="#000" opacity=".2"/>`},
+};
+
+// ชุด: {S}=สีเสื้อ · ใช้ overlay ขาว/ดำโปร่งทำเฉด ใช้ได้กับทุกสี
+const BASE = `<path d="M40 490 Q46 358 136 316 L264 316 Q358 358 366 490 Z" fill="{S}"/>`;
+const OUTFIT = {
+  crew: BASE + `<path d="M136 316 Q200 342 264 316 Q200 330 136 316 Z" fill="#000" opacity=".12"/>`,
+  collar: BASE + `<path d="M168 316 L200 358 L170 368 L146 328 Z" fill="#fff" opacity=".9"/><path d="M232 316 L200 358 L230 368 L254 328 Z" fill="#fff" opacity=".9"/>`,
+  hoodie: BASE + `<path d="M134 318 Q200 300 266 318 L266 340 Q200 322 134 340 Z" fill="#000" opacity=".22"/>
+           <path d="M184 340 L179 412" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".92"/>
+           <path d="M216 340 L221 412" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".92"/>
+           <circle cx="179" cy="416" r="6.5" fill="#fff" opacity=".92"/><circle cx="221" cy="416" r="6.5" fill="#fff" opacity=".92"/>`,
+  vneck: BASE + `<path d="M178 316 L200 360 L222 316 Z" fill="{SK}"/><path d="M178 316 L200 360 L222 316" fill="none" stroke="#000" stroke-width="4" opacity=".14"/>`,
+  turtle: BASE + `<path d="M156 300 Q200 286 244 300 L244 348 Q200 366 156 348 Z" fill="{S}"/><path d="M156 300 Q200 286 244 300 L244 348 Q200 366 156 348 Z" fill="#fff" opacity=".14"/>`,
+  blazer: BASE + `<path d="M170 316 L200 410 L230 316 Z" fill="#fff"/>
+          <path d="M152 318 L200 410 L170 328 Z" fill="#000" opacity=".22"/><path d="M248 318 L200 410 L230 328 Z" fill="#000" opacity=".22"/>
+          <path d="M194 332 L200 352 L206 332 Z" fill="{A}"/><path d="M196 350 L200 400 L204 350 Z" fill="{A}"/>`,
+  cardigan: BASE + `<path d="M178 316 L200 360 L222 316 Z" fill="{A}"/>
+            <rect x="196" y="360" width="8" height="140" fill="#000" opacity=".12"/>
+            <circle cx="200" cy="384" r="5" fill="#fff" opacity=".8"/><circle cx="200" cy="414" r="5" fill="#fff" opacity=".8"/><circle cx="200" cy="444" r="5" fill="#fff" opacity=".8"/>`,
+  stripe: BASE + `<g clip-path="url(#{CLIP})" fill="#fff" opacity=".4"><rect x="30" y="352" width="340" height="14"/><rect x="30" y="384" width="340" height="14"/><rect x="30" y="416" width="340" height="14"/><rect x="30" y="448" width="340" height="14"/></g>
+          <path d="M136 316 Q200 342 264 316 Q200 330 136 316 Z" fill="#000" opacity=".12"/>`,
+  doctor: BASE + `<path d="M168 316 L200 400 L232 316 Z" fill="#8FC3E8"/>
+          <path d="M152 318 L200 400 L172 330 Z" fill="#000" opacity=".08"/><path d="M248 318 L200 400 L228 330 Z" fill="#000" opacity=".08"/>
+          <path d="M162 322 Q150 380 186 396" fill="none" stroke="#4F5A72" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="190" cy="398" r="9" fill="#4F5A72"/><circle cx="190" cy="398" r="4" fill="#AEB6C6"/>
+          <rect x="236" y="380" width="30" height="8" rx="3" fill="#35A9E8"/>`,
+  apron: BASE + `<path d="M150 360 Q200 344 250 360 L256 490 L144 490 Z" fill="{A}"/><path d="M160 340 L150 360 M240 340 L250 360" stroke="{A}" stroke-width="6"/>`,
+};
+
+/* ===================== นักแสดง ===================== */
+const CAST = [
+  {name:'Mia',   age:'24', role:'ครูหลัก · ใจเย็น พูดชัด', skin:'light', face:'oval',  hair:'long',     H:'#6B4430', outfit:'crew',    S:'#E8833A', tags:[['ครู','#fff1e0','#b85700'],['20s','#e8f6ff','#1a6c9c']]},
+  {name:'Bryan', age:'35', role:'ภาษาที่ทำงาน · มืออาชีพ', skin:'tan',  face:'square', hair:'sidepart', H:'#2B2230', outfit:'blazer',  S:'#34406B', A:'#E8833A', stubble:true, tags:[['ออฟฟิศ','#ece0ff','#67349f'],['30s','#e8f6ff','#1a6c9c']]},
+  {name:'Emma',  age:'27', role:'สดใส ชวนคุยเก่ง', skin:'fair', face:'oval', hair:'bob', H:'#E0B45A', outfit:'collar', S:'#3E7BD6', earrings:'#FFC53D', tags:[['เพื่อนคุย','#ddf8cb','#45a302'],['20s','#e8f6ff','#1a6c9c']]},
+  {name:'Aisha', age:'29', role:'ท่องเที่ยว · สนามบิน', skin:'tan',   face:'oval',  hair:'hijab',    H:'#2B2230', A:'#5B8FD6', outfit:'turtle', S:'#F0C246', tags:[['เดินทาง','#e8f6ff','#1a6c9c'],['20s','#e8f6ff','#1a6c9c']]},
+  {name:'Leo',   age:'42', role:'เชฟ · ร้านอาหาร', skin:'deep',  face:'square', hair:'afro',     H:'#1E1A22', outfit:'apron',  S:'#3FA37A', A:'#FFFFFF', beard:true, tags:[['ร้านอาหาร','#fff1e0','#b85700'],['40s','#ffe9d2','#b85700']]},
+  {name:'Nina',  age:'52', role:'หัวหน้างาน · สัมภาษณ์งาน', skin:'light', face:'long', hair:'bob',   H:'#9C8E96', outfit:'blazer', S:'#C2456B', A:'#FFC53D', glasses:'#2B2036', tags:[['สัมภาษณ์','#ece0ff','#67349f'],['50s','#ffe4e4','#cc3b3b']]},
+  {name:'Grandma Noi', age:'71', role:'คุณยาย · เล่าเรื่องช้า ๆ', skin:'fair', face:'round', hair:'bun', H:'#D9D6DE', outfit:'cardigan', S:'#8E6FC9', A:'#F3D3DC', glasses:'#8C5A3B', wrinkles:true, tags:[['ครอบครัว','#ffe4e4','#cc3b3b'],['70s','#f0f0f0','#4f5a72']]},
+  {name:'Grandpa Somchai', age:'74', role:'คุณตา · ใจดี', skin:'tan', face:'square', hair:'balding', H:'#D9D6DE', outfit:'collar', S:'#5B8C6E', glasses:'#2B2036', mustache:'#D9D6DE', wrinkles:true, tags:[['ครอบครัว','#ffe4e4','#cc3b3b'],['70s','#f0f0f0','#4f5a72']]},
+  {name:'Ploy',  age:'8',  role:'เด็กประถม · ช่างสงสัย', skin:'light', face:'round', hair:'pigtails', H:'#3B2B2B', A:'#FF6B9A', outfit:'stripe', S:'#FF8A00', freckles:true, kid:true, tags:[['เด็ก','#fff3d6','#d99a00'],['8 ขวบ','#fff3d6','#d99a00']]},
+  {name:'Jay',   age:'16', role:'วัยรุ่น · ศัพท์สแลง', skin:'brown', face:'oval', hair:'spiky', H:'#1E1A22', outfit:'hoodie', S:'#6C5BD4', tags:[['วัยรุ่น','#ece0ff','#67349f'],['teen','#ece0ff','#67349f']]},
+  {name:'Ken',   age:'31', role:'พนักงานร้านกาแฟ', skin:'fair', face:'long', hair:'cap', H:'#2B2230', A:'#2F7F6A', outfit:'apron', S:'#F5E6B8', tags:[['ร้านกาแฟ','#ddf8cb','#45a302'],['30s','#e8f6ff','#1a6c9c']]},
+  {name:'Sofia', age:'22', role:'นักศึกษา · กีฬา', skin:'brown', face:'oval', hair:'ponytail', H:'#5A3A26', outfit:'vneck', S:'#E35D8C', tags:[['มหาลัย','#e8f6ff','#1a6c9c'],['20s','#e8f6ff','#1a6c9c']]},
+  {name:'Tom',   age:'38', role:'คุณพ่อ · งานบ้าน', skin:'fair', face:'square', hair:'buzz', H:'#8A6A48', outfit:'crew', S:'#3E7BD6', beard:true, tags:[['ครอบครัว','#ffe4e4','#cc3b3b'],['30s','#e8f6ff','#1a6c9c']]},
+  {name:'Mali',  age:'33', role:'หมอ · โรงพยาบาล', skin:'tan', face:'oval', hair:'bangs', H:'#2B2230', outfit:'doctor', S:'#FFFFFF', glasses:'#34406B', tags:[['สุขภาพ','#ddf8cb','#45a302'],['30s','#e8f6ff','#1a6c9c']]},
+];
+
+/* ===================== ประกอบ ===================== */
+function build(c, i) {
+  const [SKIN, SH, BL] = SKINS[c.skin];
+  const h = HAIR[c.hair];
+  const sub = (s) => s.replaceAll('{H}', c.H).replaceAll('{A}', c.A || '#FFC53D')
+                      .replaceAll('{S}', c.S).replaceAll('{SK}', SH).replaceAll('{CLIP}', `clip${i}`);
+  const bg = ['#DDEFFB','#FFE9D2','#ECE0FF','#DDF8CB','#FFF3D6','#FFE4E4'][i % 6];
+
+  const eyeR = c.kid ? 25 : (c.wrinkles ? 19 : 23);
+  const pupil = c.kid ? 14 : (c.wrinkles ? 10 : 12);
+
+  const glasses = c.glasses ? `
+    <g fill="none" stroke="${c.glasses}" stroke-width="5">
+      <circle cx="165" cy="188" r="${eyeR+8}"/><circle cx="235" cy="188" r="${eyeR+8}"/>
+      <path d="M${165+eyeR+8} 186 Q200 176 ${235-eyeR-8} 186"/>
+      <path d="M${165-eyeR-8} 184 L126 176"/><path d="M${235+eyeR+8} 184 L274 176"/>
+    </g>` : '';
+
+  const wrinkles = c.wrinkles ? `
+    <g fill="none" stroke="${SH}" stroke-width="3.5" stroke-linecap="round">
+      <path d="M170 126 q30 -8 60 0"/><path d="M178 138 q22 -6 44 0"/>
+      <path d="M150 244 q-8 16 2 30"/><path d="M250 244 q8 16 -2 30"/>
+      <path d="M130 196 l-8 -4"/><path d="M270 196 l8 -4"/>
+    </g>` : '';
+
+  const freckles = c.freckles ? `
+    <g fill="${SH}"><circle cx="140" cy="226" r="3"/><circle cx="152" cy="232" r="3"/><circle cx="146" cy="220" r="2.5"/>
+    <circle cx="260" cy="226" r="3"/><circle cx="248" cy="232" r="3"/><circle cx="254" cy="220" r="2.5"/></g>` : '';
+
+  const beard = c.beard ? `<path d="M130 236 Q134 306 200 322 Q266 306 270 236 Q258 290 200 294 Q142 290 130 236 Z" fill="${c.H}"/>
+                            <path d="M170 256 Q185 244 200 252 Q215 244 230 256 Q215 262 200 256 Q185 262 170 256 Z" fill="${c.H}"/>` : '';
+  const stubble = c.stubble ? `<path d="M134 250 Q138 304 200 316 Q262 304 266 250 Q250 292 200 296 Q150 292 134 250 Z" fill="${c.H}" opacity=".18"/>` : '';
+  const mustache = c.mustache ? `<path d="M166 252 Q184 238 200 248 Q216 238 234 252 Q216 262 200 254 Q184 262 166 252 Z" fill="${c.mustache}"/>` : '';
+  const earrings = c.earrings ? `<circle cx="124" cy="244" r="7" fill="${c.earrings}"/><circle cx="276" cy="244" r="7" fill="${c.earrings}"/>` : '';
+
+  return `
+  <svg viewBox="40 60 320 384" preserveAspectRatio="xMidYMid slice">
+    <defs><clipPath id="clip${i}"><path d="M40 490 Q46 358 136 316 L264 316 Q358 358 366 490 Z"/></clipPath></defs>
+    <rect x="0" y="0" width="400" height="480" fill="${bg}"/>
+    <g class="neck"><path d="M176 258 L224 258 L246 382 L154 382 Z" fill="${SH}"/></g>
+    <g class="body">${sub(OUTFIT[c.outfit])}</g>
+    <g class="head">
+      ${sub(h.back)}
+      <path d="${FACES[c.face]}" fill="${SKIN}"/>
+      <ellipse cx="150" cy="232" rx="19" ry="11" fill="${BL}" opacity=".5"/>
+      <ellipse cx="250" cy="232" rx="19" ry="11" fill="${BL}" opacity=".5"/>
+      ${freckles}${wrinkles}${stubble}${earrings}
+      <circle cx="165" cy="188" r="${eyeR}" fill="${WHITE}"/>
+      <circle cx="235" cy="188" r="${eyeR}" fill="${WHITE}"/>
+      <g class="pupils"><circle cx="167" cy="195" r="${pupil}" fill="${DARK}"/><circle cx="237" cy="195" r="${pupil}" fill="${DARK}"/>
+        ${c.kid ? `<circle cx="172" cy="189" r="4" fill="#fff"/><circle cx="242" cy="189" r="4" fill="#fff"/>` : ''}</g>
+      <g class="lids"><rect x="136" y="-60" width="58" height="60" fill="${SKIN}"/><rect x="206" y="-60" width="58" height="60" fill="${SKIN}"/></g>
+      <g class="brows" fill="none" stroke="${c.hair==='hijab' ? '#3B2B2B' : c.H}" stroke-width="7" stroke-linecap="round">
+        <path d="M146 156 q20 -11 42 -3"/><path d="M212 153 q20 -9 42 3"/></g>
+      ${glasses}
+      <path d="M200 214 q9 16 -7 19" fill="none" stroke="${SH}" stroke-width="6" stroke-linecap="round"/>
+      ${beard}
+      <g class="jaw"><g class="mouth"></g></g>
+      ${mustache}
+      ${sub(h.front)}
+    </g>
+  </svg>`;
+}
+
+/* ===================== ปาก (ชุดย่อจาก FlatTutor) ===================== */
+const MOUTH = {
+  rest:`<path d="M-17 -2 Q0 12 17 -2" fill="none" stroke="${DARK}" stroke-width="7" stroke-linecap="round"/>`,
+  MBP:`<rect x="-18" y="-4" width="36" height="7.5" rx="3.75" fill="${DARK}"/>`,
+  E:`<ellipse rx="21" ry="10" fill="${DARK}"/><rect x="-16" y="-8.5" width="32" height="5" rx="2.5" fill="${WHITE}"/><ellipse cy="6" rx="11" ry="3.6" fill="${TONGUE}"/>`,
+  AA:`<ellipse cy="2" rx="17" ry="17" fill="${DARK}"/><rect x="-12" y="-13.5" width="24" height="5" rx="2.5" fill="${WHITE}"/><ellipse cy="11" rx="9.5" ry="5" fill="${TONGUE}"/>`,
+  O:`<ellipse rx="12" ry="14.5" fill="${DARK}"/>`,
+  U:`<ellipse rx="7.5" ry="9.5" fill="${DARK}"/>`,
+};
+const OPEN = {rest:0, MBP:0, U:.3, E:.5, O:.6, AA:1};
+const LEVELS = [[.08,['MBP','rest']],[.3,['U']],[.5,['E']],[.7,['O']],[1.1,['AA','E']]];
+
+/* ===================== วางการ์ด + อนิเมชัน ===================== */
+const grid = document.getElementById('grid');
+const actors = CAST.map((c, i) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `<div class="hint">▶ พูด</div><div class="stage">${build(c, i)}</div>
+    <div class="name">${c.name} <span style="color:#aeb6c6;font-weight:700;font-size:13px">${c.age}</span></div>
+    <div class="meta">${c.role}</div>
+    <div class="tags">${c.tags.map(([t,bg,fg])=>`<span class="tag" style="background:${bg};color:${fg}">${t}</span>`).join('')}</div>`;
+  grid.appendChild(card);
+  const q = (s) => card.querySelector(s);
+  const a = { c, card, head:q('.head'), neck:q('.neck'), body:q('.body'), lids:q('.lids'), pupils:q('.pupils'),
+              jaw:q('.jaw'), mouth:q('.mouth'), talking:false,
+              pose:{r:0,x:0,y:0}, to:{r:0,x:0,y:0}, next:Math.random()*2,
+              blink:0, nextBlink:1+Math.random()*3, shape:'rest', open:0, band:-1, lastShape:0, phase:Math.random()*6 };
+  a.mouth.innerHTML = MOUTH.rest;
+  card.onclick = () => speak(a);
+  return a;
+});
+
+const signed = (a,b) => (Math.random()<.5?-1:1)*(a+Math.random()*(b-a));
+let last = performance.now();
+function tick(now){
+  requestAnimationFrame(tick);
+  const t = now/1000, dt = Math.min(.05,(now-last)/1000); last = now;
+  for (const a of actors){
+    const tt = t + a.phase;
+    if (t >= a.next){ const amp = a.talking?1:.6;
+      a.to = {r:signed(1.8,4.5)*amp, x:signed(2,5.5)*amp, y:signed(1,3)*amp};
+      a.next = t + (a.talking ? 1.4+Math.random()*1.2 : 2.4+Math.random()*2.5); }
+    const k = Math.min(1, dt*2.6);
+    a.pose.r += (a.to.r-a.pose.r)*k; a.pose.x += (a.to.x-a.pose.x)*k; a.pose.y += (a.to.y-a.pose.y)*k;
+    const br = Math.sin(tt*1.15)*2.6;
+    a.body.setAttribute('transform', `translate(0 ${br})`);
+    const hx=a.pose.x, hy=a.pose.y+br*.5, hr=a.pose.r;
+    a.head.setAttribute('transform', `translate(${hx} ${hy}) rotate(${hr} 200 306)`);
+    a.neck.setAttribute('transform', `translate(${hx*.35} ${hy*.35}) rotate(${hr*.3} 200 382)`);
+
+    if (t >= a.nextBlink){ a.blink=1; a.nextBlink=t+2+Math.random()*3.5; }
+    if (a.blink>0) a.blink=Math.max(0,a.blink-dt*8);
+    const eyeR = a.c.kid ? 25 : (a.c.wrinkles ? 19 : 23);
+    const top = 188-eyeR, h = eyeR*2+4;
+    const base = a.c.kid ? .08 : (a.c.wrinkles ? .4 : .32);
+    const amt = Math.sin(Math.min(1,1-a.blink)*Math.PI);
+    a.lids.setAttribute('transform', `translate(0 ${top + (base+(1-base)*amt)*h})`);
+
+    let level = a.talking ? (Math.sin(tt*13)+1)*.32 : 0;
+    const band = LEVELS.findIndex(([m]) => level < m);
+    if (band !== a.band && now - a.lastShape > 150){
+      const opts = LEVELS[band][1]; a.shape = opts[(Math.random()*opts.length)|0];
+      a.mouth.innerHTML = MOUTH[a.shape]; a.band = band; a.lastShape = now; }
+    a.open += (OPEN[a.shape]-a.open)*Math.min(1,dt*16);
+    a.jaw.setAttribute('transform', `translate(0 ${a.open*7})`);
+    a.mouth.setAttribute('transform', `translate(200 ${262+a.open*4})`);
+  }
+}
+requestAnimationFrame(tick);
+
+/* ===================== พูดแนะนำตัว ===================== */
+function speak(a){
+  speechSynthesis.cancel();
+  actors.forEach(x => { x.talking=false; x.card.classList.remove('talk'); });
+  const u = new SpeechSynthesisUtterance(`Hi! I'm ${a.c.name.replace('Grandma ','').replace('Grandpa ','')}. Nice to meet you!`);
+  u.lang = 'en-US';
+  u.rate = a.c.kid ? 1.05 : (a.c.wrinkles ? .8 : .95);
+  u.pitch = a.c.kid ? 1.5 : (['Bryan','Leo','Tom','Ken','Jay','Grandpa Somchai'].includes(a.c.name) ? .8 : 1.1);
+  u.onstart = () => { a.talking=true; a.card.classList.add('talk'); a.next=0; };
+  u.onend = u.onerror = () => { a.talking=false; a.card.classList.remove('talk'); a.band=-1; };
+  speechSynthesis.speak(u);
+}
+</script>
+</body>
+</html>

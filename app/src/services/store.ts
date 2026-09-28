@@ -3,6 +3,8 @@
 export type VoiceRate = 'words' | 'calm' | 'natural'
 
 export interface Settings {
+  /** ภาษาหน้าแอป (ดู services/i18n.ts) */
+  uiLang: 'th' | 'en'
   name: string
   level: string
   tutorId: string
@@ -13,12 +15,10 @@ export interface Settings {
   autoMic: boolean
   /** โชว์เคล็ดลับการออกเสียง (คำอ่านไทย + วิธีวางลิ้น/ปาก) ตอนพูดไม่ตรง */
   pronTips: boolean
-  /** หน้าตา tutor ในบทเรียน: cartoon = SVG เดิม, vrm = ตัวละคร 3D (lip-sync ตามเสียงจริง) */
-  avatarStyle: 'cartoon' | 'vrm'
-  /** ไฟล์ตัวละคร 3D: ชื่อไฟล์ใน public/avatars หรือ 'custom' (ไฟล์ที่ผู้ใช้อัปโหลด) */
-  avatarFile: string
   /** เครื่องเสียงพูด: device = เสียงระบบ, gemini = เสียง AI cloud (โควตาจำกัด), local = Kokoro AI ในเครื่อง (ไม่จำกัด) */
   ttsEngine: 'device' | 'gemini' | 'local'
+  /** ให้แต่ละตัวละครพูดด้วยเสียงของตัวเอง (ดู services/speaker.ts) — ปิดแล้วใช้เสียงที่เลือกเองด้านล่าง */
+  voicePerCharacter: boolean
   /** ชื่อเสียงในเครื่องที่เลือกเอง (ว่าง = ให้แอปเลือกให้) */
   deviceVoice: string
   /** ชื่อเสียง Gemini TTS เช่น Kore, Puck */
@@ -44,6 +44,7 @@ const SETTINGS_KEY = 'ai-tutor:settings'
 const PROGRESS_KEY = 'ai-tutor:progress'
 
 const defaultSettings: Settings = {
+  uiLang: 'th',
   name: '',
   level: 'A2',
   tutorId: 'mia',
@@ -52,9 +53,8 @@ const defaultSettings: Settings = {
   onboarded: false,
   autoMic: true,
   pronTips: true,
-  avatarStyle: 'vrm',
-  avatarFile: 'tutor.vrm',
   ttsEngine: 'device',
+  voicePerCharacter: true,
   deviceVoice: '',
   geminiVoice: 'Kore',
   localVoice: 'af_heart',

@@ -30,3 +30,6 @@ pnpm-debug.log*
 2713390176371410506.glb
 app/public/avatars/lia.vrm
 app/public/avatars/shino.vrm
+
+# โมเดล 3D ที่ถอดออกจากแอปแล้ว — เก็บไว้ในเครื่อง ไม่เข้า git (78MB, บางไฟล์ห้ามแจกจ่าย)
+design/archive-3d-avatars/

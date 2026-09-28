@@ -5,6 +5,7 @@ import { getSettings, completeScene, addWords } from '../services/store'
 import { speak, stopSpeaking, prefetchTTS } from '../services/tts'
 import { listen, type ListenController } from '../services/stt'
 import { wordCount } from '../services/matcher'
+import { tx } from '../services/i18n'
 import { sceneTurn, getHint, GeminiError, type ChatMessage } from '../services/gemini'
 import TaskChecklist from '../components/TaskChecklist'
 import ChatBubble from '../components/ChatBubble'
@@ -55,9 +56,9 @@ export default function ScenePlayer() {
   if (!scene) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-3">
-        <div>ไม่พบสถานการณ์นี้</div>
+        <div>{tx('ไม่พบสถานการณ์นี้', 'Scene not found')}</div>
         <button type="button" onClick={() => nav('/')} className="rounded-xl bg-bee-400 px-4 py-2 font-bold">
-          กลับหน้าหลัก
+          {tx('กลับหน้าหลัก', 'Back to home')}
         </button>
       </div>
     )
@@ -139,7 +140,7 @@ export default function ScenePlayer() {
       // AI ตอบจบ → เปิดไมค์ต่อเลย (ถ้าภารกิจยังไม่ครบ)
       else if (settings.autoMic) setTimeout(startListening, 300)
     } catch (e) {
-      setError(e instanceof GeminiError ? e.message : 'เกิดข้อผิดพลาด ลองใหม่อีกครั้ง')
+      setError(e instanceof GeminiError ? e.message : tx('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง', 'Something went wrong. Please try again.'))
     } finally {
       setThinking(false)
     }
@@ -160,7 +161,7 @@ export default function ScenePlayer() {
       setHint(await getHint(scene, messages, pending?.th ?? 'จบบทสนทนาอย่างสุภาพ'))
     } catch (e) {
       setHint(null)
-      setError(e instanceof GeminiError ? e.message : 'ขอ hint ไม่สำเร็จ')
+      setError(e instanceof GeminiError ? e.message : tx('ขอ hint ไม่สำเร็จ', "Couldn't get a hint"))
     }
   }
 
@@ -178,7 +179,7 @@ export default function ScenePlayer() {
   if (!started) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-md flex-col px-6 pt-[calc(env(safe-area-inset-top)+16px)] pb-8">
-        <button type="button" onClick={() => nav(-1)} aria-label="กลับ" className="self-start text-xl text-gray-400">
+        <button type="button" onClick={() => nav(-1)} aria-label={tx('กลับ', 'Back')} className="self-start text-xl text-gray-400">
           ✕
         </button>
         <div className="pop-in mt-6 rounded-3xl bg-white p-6 shadow-md">
@@ -187,7 +188,7 @@ export default function ScenePlayer() {
           <p className="mt-2 text-sm leading-6 text-gray-600">{scene.briefTh}</p>
           <div className="mt-5 border-t border-gray-100 pt-4">
             <div className="mb-2 text-sm font-bold text-navy-900">
-              ภารกิจของคุณ <span className="text-bee-600">0/{scene.tasks.length}</span>
+              {tx('ภารกิจของคุณ', 'Your missions')} <span className="text-bee-600">0/{scene.tasks.length}</span>
             </div>
             <ul className="space-y-2">
               {scene.tasks.map((t) => (
@@ -201,9 +202,9 @@ export default function ScenePlayer() {
         </div>
         {!settings.geminiKey && (
           <div className="mt-4 rounded-2xl bg-orange-50 px-4 py-3 text-sm text-orange-700">
-            ⚠️ โหมดนี้ต้องใช้ Gemini API key (ฟรี) —{' '}
+            ⚠️ {tx('โหมดนี้ต้องใช้ Gemini API key (ฟรี)', 'This mode needs a (free) Gemini API key')} —{' '}
             <Link to="/settings" className="font-bold underline">
-              ไปตั้งค่า
+              {tx('ไปตั้งค่า', 'Open settings')}
             </Link>
           </div>
         )}
@@ -212,7 +213,7 @@ export default function ScenePlayer() {
           onClick={start}
           className="mt-auto w-full rounded-2xl bg-bee-400 py-4 text-lg font-bold text-navy-900 shadow-md transition active:scale-[0.98]"
         >
-          เริ่มบทสนทนา 🎬
+          {tx('เริ่มบทสนทนา', 'Start conversation')} 🎬
         </button>
       </div>
     )
@@ -222,7 +223,7 @@ export default function ScenePlayer() {
   return (
     <div className="mx-auto flex h-dvh max-w-md flex-col bg-bee-50">
       <header className="flex items-center gap-3 border-b border-bee-200 bg-white px-4 pt-[calc(env(safe-area-inset-top)+10px)] pb-2.5">
-        <button type="button" onClick={() => nav('/')} aria-label="ออก" className="text-lg text-gray-400">
+        <button type="button" onClick={() => nav('/')} aria-label={tx('ออก', 'Exit')} className="text-lg text-gray-400">
           ✕
         </button>
         <div className="flex-1 truncate text-center font-en text-sm font-bold text-navy-900">
@@ -237,10 +238,10 @@ export default function ScenePlayer() {
         {messages.map((m, i) => (
           <ChatBubble key={i} role={m.role} text={m.text} praise={m.praise} />
         ))}
-        {thinking && <div className="text-sm text-gray-400">กำลังพิมพ์…</div>}
+        {thinking && <div className="text-sm text-gray-400">{tx('กำลังพิมพ์…', 'Typing…')}</div>}
         {hint && (
           <div className="pop-in rounded-2xl border-2 border-dashed border-bee-300 bg-bee-100 px-4 py-2.5 text-sm">
-            💡 ลองพูดว่า: <b className="font-en">{hint}</b>
+            💡 {tx('ลองพูดว่า:', 'Try saying:')} <b className="font-en">{hint}</b>
           </div>
         )}
         {error && <div className="rounded-2xl bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</div>}
@@ -253,7 +254,7 @@ export default function ScenePlayer() {
             onClick={finish}
             className="w-full rounded-2xl bg-leaf-500 py-3.5 font-bold text-white shadow-md transition active:scale-[0.98]"
           >
-            🎉 ภารกิจครบแล้ว — สรุปผล
+            🎉 {tx('ภารกิจครบแล้ว — สรุปผล', 'All missions done — see results')}
           </button>
         </div>
       )}
@@ -262,7 +263,7 @@ export default function ScenePlayer() {
         <button
           type="button"
           onClick={askHint}
-          aria-label="ขอคำใบ้"
+          aria-label={tx('ขอคำใบ้', 'Get a hint')}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-bee-100 text-lg shadow-sm active:scale-90"
         >
           💡
@@ -270,7 +271,7 @@ export default function ScenePlayer() {
         <div className="flex flex-col items-center">
           {listening && interim && <div className="mb-1 max-w-60 truncate text-xs italic text-blue-500">"{interim}"</div>}
           <MicButton listening={listening} disabled={thinking} onPress={handleMic} />
-          <span className="mt-1 text-[11px] text-gray-400">{listening ? 'แตะเพื่อส่ง' : 'แตะแล้วพูด'}</span>
+          <span className="mt-1 text-[11px] text-gray-400">{listening ? tx('แตะเพื่อส่ง', 'Tap to send') : tx('แตะแล้วพูด', 'Tap to speak')}</span>
         </div>
         <span className="h-11 w-11" />
       </div>

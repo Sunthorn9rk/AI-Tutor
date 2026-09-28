@@ -1,3 +1,5 @@
+import { tx } from '../services/i18n'
+
 interface Props {
   listening: boolean
   disabled?: boolean
@@ -13,7 +15,7 @@ export default function MicButton({ listening, disabled, onPress, size = 'lg' }:
       type="button"
       onClick={onPress}
       disabled={disabled}
-      aria-label={listening ? 'หยุดฟัง' : 'กดเพื่อพูด'}
+      aria-label={listening ? tx('หยุดฟัง', 'Stop listening') : tx('กดเพื่อพูด', 'Press to speak')}
       className={`${dim} flex items-center justify-center rounded-full shadow-lg transition active:scale-95 disabled:opacity-40 ${
         listening ? 'bg-red-500 talking-ring' : 'bg-bee-400'
       }`}

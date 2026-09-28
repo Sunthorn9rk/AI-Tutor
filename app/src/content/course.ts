@@ -1,51 +1,15 @@
 import type { Course, Lesson, Module, Scene } from './schema'
 import courseData from './course-a2.json'
+import { CAST, getCharacter, type CharacterSpec } from './cast'
 
 export const course = courseData as Course
 
-export interface TutorInfo {
-  id: string
-  name: string
-  desc: string
-  /** สีผม/ผิว สำหรับ avatar SVG */
-  hair: string
-  skin: string
-  shirt: string
-  hairStyle: 'long' | 'short'
-}
-
-export const tutors: TutorInfo[] = [
-  {
-    id: 'mia',
-    name: 'Mia',
-    desc: 'ครูเสียงอบอุ่น พูดชัด ใจเย็น',
-    hair: '#8a5a3b',
-    skin: '#ffd9b8',
-    shirt: '#e8b4a0',
-    hairStyle: 'long',
-  },
-  {
-    id: 'emma',
-    name: 'Emma',
-    desc: 'สดใส เป็นกันเอง ชวนคุยเก่ง',
-    hair: '#e3b04b',
-    skin: '#ffe3c4',
-    shirt: '#7ea8d8',
-    hairStyle: 'long',
-  },
-  {
-    id: 'bryan',
-    name: 'Bryan',
-    desc: 'มืออาชีพ เหมาะกับภาษาที่ทำงาน',
-    hair: '#3b2f2f',
-    skin: '#f0c49a',
-    shirt: '#4a5d7e',
-    hairStyle: 'short',
-  },
-]
+// รายชื่อ tutor มาจาก content/cast.ts (ตัวละครทั้งหมด) — Mia อยู่ลำดับแรก = ค่าเริ่มต้น
+export type TutorInfo = CharacterSpec
+export const tutors: TutorInfo[] = CAST
 
 export function getTutor(id: string): TutorInfo {
-  return tutors.find((t) => t.id === id) ?? tutors[0]
+  return getCharacter(id)
 }
 
 export function findLesson(lessonId: string): { module: Module; lesson: Lesson } | null {
