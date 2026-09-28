@@ -9,6 +9,11 @@ the open rather than waiting until it's done.
 
 > Thai-language setup and usage guide: [`app/README.md`](app/README.md)
 
+| | | |
+|:--:|:--:|:--:|
+| ![Home](Image/1.png) | ![Lesson player](Image/3.png) | ![Tutor cast](Image/5.png) |
+| Progress, XP and streak | Speaking drill, bilingual subtitles | Fourteen tutors, each with a voice |
+
 ---
 
 ## Why this repo is worth a look
@@ -71,13 +76,25 @@ interchangeable behind one chat interface. Ollama errors are typed —
 `unreachable | no-model | other` — so the UI can tell the user *which* thing to fix rather than
 showing a generic failure.
 
+### 5. Trading a 3D avatar for fourteen drawn ones
+
+The tutor started as a rigged **VRM model rendered with three.js**. It cost ~11MB of binary
+asset, pulled in a 3D runtime, tied the app to someone else's character licence, and gave me
+exactly one tutor.
+
+It was replaced with `components/FlatTutor.tsx` — an animated flat-SVG character assembled from
+parametric parts (hair, skin, eyes, brows, accessories). The same 180 lines render a cast of
+**fourteen** distinct tutors, each of which can carry its own voice (`voicePerCharacter` in
+Settings, wired through a global speaker state). three.js and the binary assets are gone, every
+character is original artwork, and adding another is a data change rather than a modelling job.
+
 ---
 
 ## Stack
 
 React · TypeScript · Vite · TailwindCSS · PWA
 Gemini API · Ollama · Kokoro TTS (`kokoro-js`) · Web Speech API
-`@pixiv/three-vrm` + `three` for the VRM avatar
+Animated SVG characters · Thai/English i18n (`services/i18n.ts`)
 
 ## Layout
 
@@ -89,7 +106,7 @@ app/src/
 │   ├── gemini-tts.ts / local-tts.ts / kokoro-worker.ts / tts.ts / audio-bus.ts
 │   ├── matcher.ts / pron-rules.ts   deterministic answer checking + pronunciation tips
 │   └── store.ts                     settings, progress, streak (localStorage)
-├── components/  TutorAvatar, ExerciseCard, ChatBubble, MicButton, RetryCoach
+├── components/  FlatTutor (parametric SVG cast), ExerciseCard, ChatBubble, MicButton, RetryCoach
 └── content/     course-a2.json — 3 modules × 3 lessons + 4 scenes, JSON-authored
 ```
 
@@ -108,19 +125,16 @@ configuration. Role-play and free talk need a free Gemini key, entered in Settin
 ## Known gaps
 
 - One A2 course only; the content pipeline supports more, the content doesn't exist yet
-- Avatar lip-sync is approximate
 - No tests
 - Not deployed anywhere public yet
 
-## Avatars
+## Characters
 
-One avatar ships with the repo (the official VRM Consortium mascot). Two others used in
-development are left out on licensing grounds — VRoid Hub models carry per-creator terms and
-redistribution usually isn't among them. You can load any `.vrm` of your own from
-**Settings → avatar**; it's stored in IndexedDB on your device.
+All fourteen tutors are original flat-vector artwork generated from parametric SVG parts —
+no third-party character assets are bundled, and nothing needs downloading at runtime.
+Approved prototypes live in `design/`.
 
 ## Credits
 
-Full attribution and third-party asset terms: [`CREDITS.md`](CREDITS.md).
-Inspired by BeeSpeaker. VRM rendering via `@pixiv/three-vrm`, offline speech from
-[Kokoro](https://github.com/hexgrad/kokoro) (82M).
+Full attribution and third-party terms: [`CREDITS.md`](CREDITS.md).
+Inspired by BeeSpeaker. Offline speech from [Kokoro](https://github.com/hexgrad/kokoro) (82M).
